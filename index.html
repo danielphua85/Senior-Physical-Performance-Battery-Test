@@ -3,63 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Coach Daniel – SPPB Chair Stand</title>
+<title>Coach Daniel – SPPB Chair + Balance</title>
 
 <style>
-html,body{
-  margin:0; padding:0;
-  background:#000;
-  color:#fff;
-  font-family: system-ui, -apple-system;
+html,body{margin:0;padding:0;background:#000;color:#fff;font-family:system-ui}
+#stage{position:relative;width:100vw;height:100vh;overflow:hidden}
+video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+canvas{pointer-events:none}
+
+#stats{
+  position:absolute;top:10px;left:10px;
+  background:rgba(0,0,0,.55);
+  padding:10px 12px;border-radius:12px;font-size:14px
 }
-#stage{
-  position:relative;
-  width:100vw;
-  height:100vh;
-  overflow:hidden;
-}
-video,canvas{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-}
-canvas{ pointer-events:none; }
 
 #hud{
-  position:absolute;
-  bottom:12px;
-  left:0; right:0;
-  display:flex;
-  justify-content:center;
-  gap:8px;
-  flex-wrap:wrap;
-  z-index:10;
+  position:absolute;bottom:10px;left:0;right:0;
+  display:flex;justify-content:center;gap:8px;flex-wrap:wrap
 }
 
 button,select{
-  padding:10px 14px;
-  font-size:14px;
-  border-radius:12px;
-  border:none;
-  font-weight:800;
+  padding:10px 14px;font-size:14px;border-radius:12px;border:none;font-weight:800
 }
-
-#startCam{ background:#22c55e; color:#000; }
-#aBtn{ background:#3b82f6; }
-#bBtn{ background:#f59e0b; }
-#startTest{ background:#16a34a; color:#000; }
-#stopTest{ background:#991b1b; }
-
-#stats{
-  position:absolute;
-  top:10px; left:10px;
-  background:rgba(0,0,0,.5);
-  padding:10px 12px;
-  border-radius:12px;
-  font-size:14px;
-}
+.green{background:#22c55e;color:#000}
+.blue{background:#3b82f6}
+.orange{background:#f59e0b}
+.red{background:#991b1b}
 </style>
 </head>
 
@@ -70,23 +39,35 @@ button,select{
   <canvas id="canvas"></canvas>
 
   <div id="stats">
+    Mode: <span id="mode">Chair</span><br>
     ⏱ <span id="timer">0.0</span>s<br>
     🔢 Reps: <span id="reps">0</span><br>
     Status: <span id="status">Ready</span>
   </div>
 
   <div id="hud">
-    <button id="startCam">Start Camera</button>
-    <button id="aBtn">Calibrate A</button>
-    <button id="bBtn">Calibrate B</button>
+    <button id="startCam" class="green">Start Camera</button>
+
+    <select id="testMode">
+      <option value="chair">Chair Stand</option>
+      <option value="balance">Balance</option>
+    </select>
+
+    <select id="balanceLeg" style="display:none">
+      <option value="left">Left Leg</option>
+      <option value="right">Right Leg</option>
+    </select>
+
+    <button id="calA" class="blue">Calibrate A</button>
+    <button id="calB" class="orange">Calibrate B</button>
 
     <select id="duration">
       <option value="30">30s</option>
       <option value="60">1 min</option>
     </select>
 
-    <button id="startTest">Start Test</button>
-    <button id="stopTest">Stop</button>
+    <button id="startTest" class="green">Start</button>
+    <button id="stopTest" class="red">Stop</button>
   </div>
 </div>
 
@@ -95,130 +76,145 @@ button,select{
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
 
 <script>
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const v=document.getElementById("video");
+const c=document.getElementById("canvas");
+const ctx=c.getContext("2d");
 
-let detector, running=false, lastPose=null;
-let yA=null, yB=null;
-let reps=0, lastState="unknown";
-let testing=false, startTime=0;
-let testDuration=30;
-let lastSwitch=0;
+let detector,running=false,lastPose=null;
+let yA=null,yB=null;
+let reps=0,lastState="unknown";
+let testing=false,startTime=0,duration=30,lastSwitch=0;
+let balLeg="left",balStartY=null,balStartX=null;
 
-// --- Utils ---
-function midHipY(p){
-  const lh=p.keypoints.find(k=>k.name==="left_hip");
-  const rh=p.keypoints.find(k=>k.name==="right_hip");
+// ---- helpers ----
+const kp=(p,n)=>p.keypoints.find(k=>k.name===n);
+const midHipY=p=>{
+  const lh=kp(p,"left_hip"),rh=kp(p,"right_hip");
   if(!lh||!rh||lh.score<0.3||rh.score<0.3) return null;
   return (lh.y+rh.y)/2;
-}
-function zone(y){
-  if(yA==null||yB==null||y==null) return "unknown";
-  const tol=Math.abs(yB-yA)*0.25;
-  if(Math.abs(y-yA)<tol) return "stand";
-  if(Math.abs(y-yB)<tol) return "sit";
-  return lastState;
-}
+};
+const midHipX=p=>{
+  const lh=kp(p,"left_hip"),rh=kp(p,"right_hip");
+  if(!lh||!rh||lh.score<0.3||rh.score<0.3) return null;
+  return (lh.x+rh.x)/2;
+};
 
-// --- Camera ---
+// ---- camera ----
 async function startCamera(){
-  const stream=await navigator.mediaDevices.getUserMedia({
-    video:{ facingMode:"environment", width:{ideal:720}, height:{ideal:1280} },
+  const s=await navigator.mediaDevices.getUserMedia({
+    video:{facingMode:"environment",width:{ideal:720},height:{ideal:1280}},
     audio:false
   });
-  video.srcObject=stream;
-  await video.play();
-
-  canvas.width=video.videoWidth;
-  canvas.height=video.videoHeight;
+  v.srcObject=s; await v.play();
+  c.width=v.videoWidth; c.height=v.videoHeight;
 
   await tf.ready();
   detector=await poseDetection.createDetector(
     poseDetection.SupportedModels.MoveNet,
-    { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+    {modelType:poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING}
   );
-  running=true;
-  loop();
+  running=true; loop();
 }
 
-// --- Loop ---
+// ---- main loop ----
 async function loop(){
   if(!running) return;
-  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  ctx.drawImage(v,0,0,c.width,c.height);
+  const p=(await detector.estimatePoses(v))[0];
+  lastPose=p;
 
-  const poses=await detector.estimatePoses(video);
-  const pose=poses[0];
-  lastPose=pose;
-
-  if(pose){
-    for(const k of pose.keypoints){
+  if(p){
+    for(const k of p.keypoints){
       if(k.score>0.3){
-        ctx.beginPath();
-        ctx.arc(k.x,k.y,6,0,Math.PI*2);
-        ctx.fillStyle="#22c55e";
-        ctx.fill();
+        ctx.beginPath();ctx.arc(k.x,k.y,6,0,Math.PI*2);
+        ctx.fillStyle="#22c55e";ctx.fill();
       }
     }
   }
 
-  // Draw calibration lines
-  ctx.lineWidth=3; ctx.font="16px system-ui";
-  if(yA){ ctx.strokeStyle="#3b82f6"; ctx.beginPath(); ctx.moveTo(0,yA); ctx.lineTo(canvas.width,yA); ctx.stroke(); }
-  if(yB){ ctx.strokeStyle="#f59e0b"; ctx.beginPath(); ctx.moveTo(0,yB); ctx.lineTo(canvas.width,yB); ctx.stroke(); }
-
-  if(testing && pose){
-    const y=midHipY(pose);
-    const state=zone(y);
-    const now=performance.now();
-
-    if(lastState==="sit" && state==="stand" && now-lastSwitch>500){
-      reps++;
-      lastSwitch=now;
-      document.getElementById("reps").textContent=reps;
-    }
-    lastState=state;
-
-    const elapsed=(now-startTime)/1000;
-    document.getElementById("timer").textContent=elapsed.toFixed(1);
-    if(elapsed>=testDuration){
-      stopTest();
-    }
+  if(testing && p){
+    if(document.getElementById("testMode").value==="chair") chairLogic(p);
+    else balanceLogic(p);
   }
 
   requestAnimationFrame(loop);
 }
 
-// --- Controls ---
-function stopTest(){
-  testing=false;
-  document.getElementById("status").textContent="Completed";
+// ---- chair logic ----
+function zone(y){
+  const tol=Math.abs(yB-yA)*0.25;
+  if(Math.abs(y-yA)<tol) return "stand";
+  if(Math.abs(y-yB)<tol) return "sit";
+  return lastState;
+}
+function chairLogic(p){
+  const y=midHipY(p); if(y==null) return;
+  const z=zone(y), now=performance.now();
+  if(lastState==="sit" && z==="stand" && now-lastSwitch>500){
+    reps++; lastSwitch=now;
+    document.getElementById("reps").textContent=reps;
+  }
+  lastState=z;
+  updateTimer(now);
 }
 
+// ---- balance logic ----
+function balanceLogic(p){
+  const y=midHipY(p), x=midHipX(p);
+  const now=performance.now();
+  if(balStartY===null){
+    balStartY=y; balStartX=x; startTime=now;
+  }
+  const driftY=Math.abs(y-balStartY);
+  const driftX=Math.abs(x-balStartX);
+  if(driftY>c.height*0.05 || driftX>c.width*0.08){
+    stopTest();
+    return;
+  }
+  updateTimer(now);
+}
+
+// ---- timer ----
+function updateTimer(now){
+  const t=(now-startTime)/1000;
+  document.getElementById("timer").textContent=t.toFixed(1);
+}
+
+// ---- controls ----
 document.getElementById("startCam").onclick=startCamera;
 
-document.getElementById("aBtn").onclick=()=>{
-  if(!lastPose) return alert("No pose detected");
-  yA=midHipY(lastPose);
+document.getElementById("testMode").onchange=e=>{
+  const m=e.target.value;
+  document.getElementById("mode").textContent=m;
+  document.getElementById("balanceLeg").style.display=(m==="balance")?"inline":"none";
 };
 
-document.getElementById("bBtn").onclick=()=>{
-  if(!lastPose) return alert("No pose detected");
+document.getElementById("balanceLeg").onchange=e=>balLeg=e.target.value;
+
+document.getElementById("calA").onclick=()=>{
+  if(!lastPose) return alert("No pose");
+  yA=midHipY(lastPose); balStartY=null;
+};
+document.getElementById("calB").onclick=()=>{
+  if(!lastPose) return alert("No pose");
   yB=midHipY(lastPose);
 };
 
 document.getElementById("startTest").onclick=()=>{
-  if(yA==null||yB==null) return alert("Calibrate A and B first");
-  reps=0;
-  lastState="unknown";
+  testing=true; reps=0;
+  lastState="unknown"; balStartY=null;
   startTime=performance.now();
-  testDuration=Number(document.getElementById("duration").value);
-  testing=true;
-  document.getElementById("reps").textContent=0;
+  duration=Number(document.getElementById("duration").value);
   document.getElementById("status").textContent="Running";
+  document.getElementById("reps").textContent=0;
 };
 
 document.getElementById("stopTest").onclick=stopTest;
+
+function stopTest(){
+  testing=false;
+  document.getElementById("status").textContent="Completed";
+}
 </script>
 
 </body>
