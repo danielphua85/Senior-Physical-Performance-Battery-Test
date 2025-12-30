@@ -250,13 +250,21 @@
           </div>
         </div>
 
-        <div class="btns">
-          <button id="btnInitCamera" class="primary">Enable Camera</button>
-          <button id="btnStopAll" class="danger" disabled>Stop Test</button>
-        </div>
-
-        <div class="notice small" id="modelNote">
-          After enabling camera, wait a moment for pose detection to start.
+        <div class="card" style="margin-top:10px; padding:12px; background: rgba(12,20,38,.55)">
+          <h2 style="margin-bottom:8px">Camera Settings</h2>
+          <label>Camera to use</label>
+          <select id="cameraFacing">
+            <option value="environment" selected>Back camera (recommended)</option>
+            <option value="user">Front camera</option>
+          </select>
+          <div class="btns">
+            <button id="btnTestCamera">Test Camera View</button>
+            <button id="btnInitCamera" class="primary">Enable Camera</button>
+            <button id="btnStopAll" class="danger" disabled>Stop Test</button>
+          </div>
+          <div class="notice small" id="modelNote">
+            Tip: Use “Test Camera View” first. If the person can’t fit full body easily, switch camera and test again.
+          </div>
         </div>
       </div>
 
@@ -388,6 +396,10 @@ const show = (screenId)=> SCREENS.forEach(s => $(s).classList.toggle("hidden", s
 const now = ()=>performance.now();
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 
+function escapeHtml(s){
+  return String(s??"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
+}
+
 const app = {
   user:null, consent:false,
   chair:{ protocolSec:30, yA:null, yB:null, reps:0, done:false, started:false, startTs:0, lastState:"unknown", lastSwitchTs:0 },
@@ -396,7 +408,8 @@ const app = {
     right:{ yA:null, time:null, done:false },
     runningLeg:null, started:false, stableStarted:false, startTs:0, stableTs:0, _x0:null, _a0:null
   },
-  detector:null, camOn:false, lastPose:null, poseConf:0, rafId:null, stopFlag:false
+  detector:null, camOn:false, lastPose:null, poseConf:0, rafId:null, stopFlag:false,
+  stream:null
 };
 
 /* =========================
@@ -442,23 +455,15 @@ const video = $("video");
 const canvas = $("canvas");
 const ctx = canvas.getContext("2d");
 
-async function enableCamera(){
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio:false,
-    video:{ facingMode:"user", width:{ideal:720}, height:{ideal:1280} }
-  });
-  video.srcObject = stream;
-  await video.play();
-  app.camOn = true;
-
-  canvas.width = video.videoWidth || 720;
-  canvas.height = video.videoHeight || 1280;
-
-  $("btnStopAll").disabled = false;
-  $("modelNote").textContent = "Loading pose model…";
-  await loadModel();
-  $("modelNote").textContent = "Pose model ready. Calibrate and start.";
-  startLoop();
+async function stopStream(){
+  if(app.stream){
+    for(const t of app.stream.getTracks()) t.stop();
+    app.stream = null;
+  }
+  if(video.srcObject){
+    video.srcObject = null;
+  }
+  app.camOn = false;
 }
 
 async function loadModel(){
@@ -469,6 +474,60 @@ async function loadModel(){
     poseDetection.SupportedModels.MoveNet,
     { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING, enableSmoothing:true, trackerType:"boundingBox" }
   );
+}
+
+async function startCamera({testOnly=false} = {}){
+  await stopStream();
+
+  const facing = $("cameraFacing").value || "environment";
+
+  // Prefer exact facingMode, but fall back if device/browser rejects it.
+  let stream = null;
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{
+        facingMode: { ideal: facing },   // "environment" (back) or "user" (front)
+        width:{ideal:720},
+        height:{ideal:1280}
+      }
+    });
+  }catch(e1){
+    // fallback: plain facingMode string
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio:false,
+        video:{
+          facingMode: facing,
+          width:{ideal:720},
+          height:{ideal:1280}
+        }
+      });
+    }catch(e2){
+      // last resort: no facingMode (browser chooses)
+      stream = await navigator.mediaDevices.getUserMedia({ audio:false, video:true });
+    }
+  }
+
+  app.stream = stream;
+  video.srcObject = stream;
+  await video.play();
+  app.camOn = true;
+
+  canvas.width = video.videoWidth || 720;
+  canvas.height = video.videoHeight || 1280;
+
+  $("btnStopAll").disabled = false;
+
+  if(testOnly){
+    $("modelNote").textContent = `Camera preview started (${facing === "environment" ? "Back" : "Front"}). If full body fits easily, press Enable Camera.`;
+    return;
+  }
+
+  $("modelNote").textContent = "Loading pose model…";
+  await loadModel();
+  $("modelNote").textContent = `Pose model ready (${facing === "environment" ? "Back" : "Front"}). Calibrate and start.`;
+  startLoop();
 }
 
 function kp(pose, name){ return pose?.keypoints?.find(k=>k.name===name) || null; }
@@ -562,15 +621,15 @@ function startLoop(){
   loop();
 }
 
-function stopAll(){
+async function stopAll(){
   app.stopFlag=true;
   $("kpiStatus").textContent="Stopped";
   $("btnStopAll").disabled=true;
-  if(video.srcObject){
-    for(const t of video.srcObject.getTracks()) t.stop();
-    video.srcObject=null;
-  }
-  app.camOn=false;
+
+  app.chair.started=false;
+  app.balance.started=false;
+
+  await stopStream();
 }
 
 /* =========================
@@ -914,9 +973,20 @@ $("btnContinue1").onclick=()=>{
 
 $("btnContinue2").onclick=()=>show("screenTests");
 
+/** NEW: Test camera view (no model load) */
+$("btnTestCamera").onclick=async()=>{
+  try{
+    await startCamera({testOnly:true});
+  }catch(e){
+    console.error(e);
+    alert("Camera preview failed. Check permissions and try again.");
+  }
+};
+
+/** Enable camera + load model */
 $("btnInitCamera").onclick=async()=>{
   try{
-    await enableCamera();
+    await startCamera({testOnly:false});
     $("btnInitCamera").disabled=true;
     $("btnStartChair").disabled=!canStartChair();
     $("btnStartBalance").disabled=!canStartBalance();
@@ -926,10 +996,7 @@ $("btnInitCamera").onclick=async()=>{
   }
 };
 
-$("btnStopAll").onclick=()=>{
-  app.chair.started=false; app.balance.started=false;
-  stopAll();
-};
+$("btnStopAll").onclick=async()=>{ await stopAll(); };
 
 $("testMode").onchange=()=>{
   const mode=$("testMode").value;
@@ -938,7 +1005,7 @@ $("testMode").onchange=()=>{
 };
 
 $("btnSetA").onclick=()=>{
-  if(!app.lastPose){ alert("No pose detected yet."); return; }
+  if(!app.lastPose){ alert("No pose detected yet. Press Enable Camera and wait for model."); return; }
   const y=midY(app.lastPose);
   if(y==null){ alert("Cannot read position. Improve lighting / keep full body in frame."); return; }
   app.chair.yA=y;
@@ -946,7 +1013,7 @@ $("btnSetA").onclick=()=>{
   $("btnStartChair").disabled=!canStartChair();
 };
 $("btnSetB").onclick=()=>{
-  if(!app.lastPose){ alert("No pose detected yet."); return; }
+  if(!app.lastPose){ alert("No pose detected yet. Press Enable Camera and wait for model."); return; }
   const y=midY(app.lastPose);
   if(y==null){ alert("Cannot read position. Improve lighting / keep full body in frame."); return; }
   app.chair.yB=y;
@@ -971,7 +1038,7 @@ $("btnManualChair").onclick=()=>{
 
 $("btnBalSetA").onclick=()=>{
   const leg=$("balanceLeg").value;
-  if(!app.lastPose){ alert("No pose detected yet."); return; }
+  if(!app.lastPose){ alert("No pose detected yet. Press Enable Camera and wait for model."); return; }
   const y=midY(app.lastPose);
   if(y==null){ alert("Cannot read stable stance. Improve lighting / full body in frame."); return; }
   if(!liftedFootOk(app.lastPose, leg)){
