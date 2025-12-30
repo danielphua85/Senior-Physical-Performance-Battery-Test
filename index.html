@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Senior Physical Performance Battery Test</title>
+  <style>
+    :root{
+      --card:#111b2e;
+      --muted:#a8b3cf;
+      --text:#e8eeff;
+      --ok:#4ade80;
+      --warn:#fbbf24;
+      --bad:#fb7185;
+      --border:rgba(255,255,255,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #081020, #0b1220 45%, #070d18);
+      color:var(--text);
+    }
+    header{
+      padding:16px 16px 10px;
+      position:sticky; top:0; backdrop-filter: blur(10px);
+      background: rgba(11,18,32,.75); border-bottom: 1px solid var(--border);
+      z-index: 5;
+    }
+    header .title{font-weight:800; font-size:16px}
+    header .sub{color:var(--muted); font-size:12px; margin-top:4px}
+    main{padding:16px; max-width: 860px; margin:0 auto;}
+    .card{
+      background: rgba(17,27,46,.82);
+      border:1px solid var(--border);
+      border-radius: 16px;
+      padding:16px;
+      margin: 12px 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    h1,h2{margin:0 0 10px}
+    h1{font-size:18px}
+    h2{font-size:16px}
+    p,li{line-height:1.4}
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .row > *{flex: 1 1 220px}
+    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    input,select{
+      width:100%; padding:12px; border-radius:12px;
+      border:1px solid var(--border); background:#0c1426; color: var(--text);
+      outline:none;
+    }
+    .btns{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
+    button{
+      border:0; border-radius: 12px;
+      padding: 12px 14px; font-weight:700;
+      cursor:pointer;
+      background: #182746; color: var(--text);
+      border: 1px solid var(--border);
+    }
+    button.primary{background: linear-gradient(90deg, #16a34a, #22c55e); color:#06110a; border:0}
+    button.danger{background: #2a1420; border:1px solid rgba(251,113,133,.35)}
+    button:disabled{opacity:.55; cursor:not-allowed}
+    .grid2{display:grid; grid-template-columns: 1fr; gap:12px}
+    @media(min-width:740px){ .grid2{grid-template-columns: 1.2fr .8fr} }
+    .videoWrap{
+      position:relative; width:100%; aspect-ratio: 9/16;
+      border-radius: 16px; overflow:hidden;
+      border:1px solid var(--border);
+      background:#000;
+    }
+    video,canvas{
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover;
+    }
+    .overlayBar{
+      position:absolute; left:10px; right:10px; bottom:10px;
+      display:flex; gap:8px; flex-wrap:wrap;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.15);
+      border-radius: 14px;
+      padding: 10px;
+    }
+    .kpi{display:flex; flex-direction:column; gap:2px; min-width: 120px}
+    .kpi .v{font-weight:900; font-size:18px}
+    .kpi .t{font-size:12px; color: var(--muted)}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+    .small{font-size:12px}
+    .hr{height:1px; background: var(--border); margin: 12px 0}
+    .notice{
+      border:1px solid rgba(251,191,36,.35);
+      background: rgba(251,191,36,.08);
+      padding: 10px 12px; border-radius: 12px;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:999px;
+      border:1px solid var(--border); background: rgba(12,20,38,.8);
+      font-size:12px; color: var(--muted);
+    }
+    .pill strong{color: var(--text)}
+    .badge{
+      display:inline-block; padding: 6px 10px; border-radius: 999px;
+      border:1px solid var(--border); background: rgba(12,20,38,.85);
+      font-size: 12px; color: var(--muted);
+      margin-right:8px; margin-top:6px;
+    }
+    .footerActions{display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; margin-top: 10px}
+    .hidden{display:none !important}
+  </style>
+</head>
+<body>
+<header>
+  <div class="title">Senior Physical Performance Battery Test</div>
+  <div class="sub">Welcome to Coach Daniel SPPB Test • Privacy: stored only on your device</div>
+</header>
+
+<main>
+
+  <!-- Welcome -->
+  <section id="screenWelcome" class="card">
+    <h1>Welcome to Coach Daniel SPPB Test</h1>
+    <p class="muted">This tool supports general fitness screening and education. It is <strong>not</strong> a medical diagnosis.</p>
+    <div class="notice small">
+      <strong>Stop immediately</strong> if you feel dizziness, chest pain, severe shortness of breath, sharp joint pain, or unwell.
+    </div>
+    <div class="btns">
+      <button class="primary" id="btnStart">Start</button>
+      <button id="btnLoadLast">Load last results</button>
+    </div>
+  </section>
+
+  <!-- Register -->
+  <section id="screenRegister" class="card hidden">
+    <h1>Registration & Consent</h1>
+    <div class="row">
+      <div>
+        <label>Name</label>
+        <input id="fName" placeholder="Full name"/>
+      </div>
+      <div>
+        <label>Age</label>
+        <input id="fAge" type="number" min="50" max="110" placeholder="e.g., 72"/>
+      </div>
+      <div>
+        <label>Gender</label>
+        <select id="fGender">
+          <option value="">Select</option>
+          <option value="men">Male</option>
+          <option value="women">Female</option>
+        </select>
+      </div>
+      <div>
+        <label>HP No.</label>
+        <input id="fPhone" inputmode="numeric" placeholder="e.g., 98163603"/>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <h2>Safety Guidelines</h2>
+    <ul class="small">
+      <li>Use a <strong>stable chair</strong> (no wheels) on a non-slip floor.</li>
+      <li>Wear <strong>proper footwear</strong> and clear obstacles.</li>
+      <li>Have a caregiver/trainer nearby if you are frail or unsteady.</li>
+      <li>Do not proceed if you feel unwell or have uncontrolled symptoms.</li>
+      <li>Stop immediately if you feel dizziness, chest pain, severe breathlessness, sharp pain, or unsafe.</li>
+    </ul>
+
+    <div class="hr"></div>
+
+    <h2>Consent</h2>
+    <p class="small muted">
+      This is a <strong>non-diagnostic</strong> fitness screening and education tool. Results are general indicators and not medical advice.
+    </p>
+
+    <div class="card" style="margin:0; padding:12px; background: rgba(12,20,38,.6)">
+      <label><input type="checkbox" id="cAgree1"> I understand this is not a medical diagnosis.</label>
+      <label><input type="checkbox" id="cAgree2"> I confirm it is safe for me to attempt these tests today.</label>
+      <label><input type="checkbox" id="cAgree3"> I will stop immediately if I feel unwell or unstable.</label>
+    </div>
+
+    <div class="btns">
+      <button id="btnBack1">Back</button>
+      <button class="primary" id="btnContinue1">Continue</button>
+    </div>
+  </section>
+
+  <!-- Guide -->
+  <section id="screenGuide" class="card hidden">
+    <h1>Test Guide</h1>
+    <div class="grid2">
+      <div>
+        <h2>Setup</h2>
+        <ul class="small">
+          <li>Place phone on a stable surface (tripod/table) at about chest height.</li>
+          <li>Stand about <strong>2–3 metres</strong> away so full body is visible.</li>
+          <li>Ensure good lighting and minimal background movement.</li>
+        </ul>
+
+        <h2>Tests</h2>
+        <ul class="small">
+          <li><strong>Chair Stand Test</strong> (30 seconds or 1 minute)</li>
+          <li><strong>Single-Leg Balance</strong> (Left then Right)</li>
+        </ul>
+
+        <div class="notice small">
+          Tip: If auto-detection struggles, you can enter reps/time manually.
+        </div>
+      </div>
+
+      <div>
+        <h2>Camera & AI</h2>
+        <p class="small muted">Uses on-device pose estimation. No video is uploaded.</p>
+        <div class="btns">
+          <button class="primary" id="btnContinue2">Proceed to Tests</button>
+          <button id="btnBack2">Back</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tests -->
+  <section id="screenTests" class="card hidden">
+    <h1>Tests</h1>
+
+    <div class="grid2">
+      <div>
+        <div class="videoWrap">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="canvas"></canvas>
+
+          <div class="overlayBar">
+            <div class="kpi">
+              <div class="v" id="kpiStatus">—</div>
+              <div class="t">Status</div>
+            </div>
+            <div class="kpi">
+              <div class="v" id="kpiTimer">0.0s</div>
+              <div class="t">Timer</div>
+            </div>
+            <div class="kpi">
+              <div class="v" id="kpiReps">0</div>
+              <div class="t">Chair Reps</div>
+            </div>
+            <div class="kpi">
+              <div class="v" id="kpiConf">—</div>
+              <div class="t">Pose Confidence</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="btns">
+          <button id="btnInitCamera" class="primary">Enable Camera</button>
+          <button id="btnStopAll" class="danger" disabled>Stop Test</button>
+        </div>
+
+        <div class="notice small" id="modelNote">
+          After enabling camera, wait a moment for pose detection to start.
+        </div>
+      </div>
+
+      <div>
+        <h2>Choose Test</h2>
+
+        <div class="card" style="margin:0 0 10px; padding:12px; background: rgba(12,20,38,.55)">
+          <label>Test Mode</label>
+          <select id="testMode">
+            <option value="chair">Chair Stand</option>
+            <option value="balance">Single-Leg Balance</option>
+          </select>
+
+          <!-- Chair -->
+          <div id="chairOptions" style="margin-top:10px">
+            <label>Protocol</label>
+            <select id="chairProtocol">
+              <option value="30">30 seconds</option>
+              <option value="60">1 minute</option>
+            </select>
+
+            <div class="hr"></div>
+            <div class="small muted">
+              Calibration:
+              <div>• <strong>Set A</strong> = Standing</div>
+              <div>• <strong>Set B</strong> = Sitting</div>
+            </div>
+
+            <div class="btns">
+              <button id="btnSetA">Set A (Standing)</button>
+              <button id="btnSetB">Set B (Sitting)</button>
+            </div>
+
+            <div class="btns">
+              <button class="primary" id="btnStartChair" disabled>Start Chair Test</button>
+              <button id="btnManualChair">Enter reps manually</button>
+            </div>
+
+            <div class="small muted" id="chairCalibInfo">A: — | B: —</div>
+          </div>
+
+          <!-- Balance -->
+          <div id="balanceOptions" class="hidden" style="margin-top:10px">
+            <label>Leg to Test</label>
+            <select id="balanceLeg">
+              <option value="left">Left leg (stand on LEFT)</option>
+              <option value="right">Right leg (stand on RIGHT)</option>
+            </select>
+
+            <div class="hr"></div>
+            <div class="small muted">
+              Calibration:
+              <div>• <strong>Set A</strong> = Stable single-leg stance</div>
+              <div>• Timer starts when stable</div>
+              <div>• Stops when balance is lost</div>
+            </div>
+
+            <div class="btns">
+              <button id="btnBalSetA">Set A (Stable stance)</button>
+              <button class="primary" id="btnStartBalance" disabled>Start Balance Test</button>
+            </div>
+
+            <div class="btns">
+              <button id="btnManualBalance">Enter time manually</button>
+            </div>
+
+            <div class="small muted" id="balCalibInfo">A: —</div>
+          </div>
+        </div>
+
+        <h2>Progress</h2>
+        <div class="row">
+          <span class="pill"><strong>Chair:</strong> <span id="pChair">Not done</span></span>
+          <span class="pill"><strong>Balance L:</strong> <span id="pBalL">Not done</span></span>
+          <span class="pill"><strong>Balance R:</strong> <span id="pBalR">Not done</span></span>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="btns">
+          <button id="btnFinish" class="primary" disabled>Finish & View Results</button>
+          <button id="btnBack3">Back</button>
+        </div>
+
+        <p class="small muted">Privacy: stored locally on your device only. No uploads.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section id="screenResults" class="card hidden">
+    <h1>Results Summary</h1>
+    <div id="resultsBlock" class="card" style="margin:0; background: rgba(12,20,38,.55)"></div>
+
+    <div class="footerActions">
+      <div class="btns">
+        <button id="btnExport">Export Results (JSON)</button>
+        <button id="btnExportPdf">Export Results (PDF)</button>
+        <button id="btnCopyContact" class="primary">Copy Coach Contact</button>
+      </div>
+      <div class="btns">
+        <button id="btnRestart">Restart</button>
+      </div>
+    </div>
+
+    <p class="small muted">
+      This assessment is for education and fitness screening only and does not diagnose medical conditions.
+      If you have frequent falls or concerning symptoms, consult a healthcare professional.
+    </p>
+  </section>
+
+</main>
+
+<!-- TFJS + Pose Detection (MoveNet) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
+
+<!-- PDF Export -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<script>
+/* =========================
+   Helpers + State
+========================= */
+const $ = (id)=>document.getElementById(id);
+const SCREENS = ["screenWelcome","screenRegister","screenGuide","screenTests","screenResults"];
+const show = (screenId)=> SCREENS.forEach(s => $(s).classList.toggle("hidden", s!==screenId));
+const now = ()=>performance.now();
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+const app = {
+  user:null, consent:false,
+  chair:{ protocolSec:30, yA:null, yB:null, reps:0, done:false, started:false, startTs:0, lastState:"unknown", lastSwitchTs:0 },
+  balance:{
+    left:{ yA:null, time:null, done:false },
+    right:{ yA:null, time:null, done:false },
+    runningLeg:null, started:false, stableStarted:false, startTs:0, stableTs:0, _x0:null, _a0:null
+  },
+  detector:null, camOn:false, lastPose:null, poseConf:0, rafId:null, stopFlag:false
+};
+
+/* =========================
+   Norms + Interpretation
+========================= */
+const chair30Norms = {
+  "60-64": { men:14, women:12 },
+  "65-69": { men:12, women:11 },
+  "70-74": { men:12, women:10 },
+  "75-79": { men:11, women:10 },
+  "80-84": { men:10, women:9  },
+  "85-89": { men:8 , women:8  },
+  "90-94": { men:7 , women:4  },
+};
+function ageBand30(age){
+  if(age>=60 && age<=64) return "60-64";
+  if(age>=65 && age<=69) return "65-69";
+  if(age>=70 && age<=74) return "70-74";
+  if(age>=75 && age<=79) return "75-79";
+  if(age>=80 && age<=84) return "80-84";
+  if(age>=85 && age<=89) return "85-89";
+  if(age>=90 && age<=94) return "90-94";
+  return null;
+}
+function chair1MinRef(age){
+  if(age>=60 && age<=69) return {low:11, high:17};
+  if(age>=70 && age<=79) return {low:10, high:15};
+  if(age>=80) return {low:8, high:14};
+  return null;
+}
+function interpretBalance(sec){
+  if(sec==null) return {label:"—", cls:"muted"};
+  if(sec<5)  return {label:"< 5 seconds: associated with higher fall risk", cls:"bad"};
+  if(sec<10) return {label:"< 10 seconds: needs improvement", cls:"warn"};
+  if(sec>30) return {label:"> 30 seconds: generally lower fall risk", cls:"ok"};
+  return {label:"10–30 seconds: moderate", cls:"warn"};
+}
+
+/* =========================
+   Camera + Pose
+========================= */
+const video = $("video");
+const canvas = $("canvas");
+const ctx = canvas.getContext("2d");
+
+async function enableCamera(){
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio:false,
+    video:{ facingMode:"user", width:{ideal:720}, height:{ideal:1280} }
+  });
+  video.srcObject = stream;
+  await video.play();
+  app.camOn = true;
+
+  canvas.width = video.videoWidth || 720;
+  canvas.height = video.videoHeight || 1280;
+
+  $("btnStopAll").disabled = false;
+  $("modelNote").textContent = "Loading pose model…";
+  await loadModel();
+  $("modelNote").textContent = "Pose model ready. Calibrate and start.";
+  startLoop();
+}
+
+async function loadModel(){
+  if(app.detector) return;
+  await tf.setBackend("webgl");
+  await tf.ready();
+  app.detector = await poseDetection.createDetector(
+    poseDetection.SupportedModels.MoveNet,
+    { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING, enableSmoothing:true, trackerType:"boundingBox" }
+  );
+}
+
+function kp(pose, name){ return pose?.keypoints?.find(k=>k.name===name) || null; }
+
+function poseConfidence(pose){
+  const names = ["left_hip","right_hip","left_shoulder","right_shoulder","left_ankle","right_ankle"];
+  let s=0,n=0;
+  for(const nm of names){
+    const k = kp(pose,nm);
+    if(k && (k.score??0)>0.2){ s+=(k.score??0); n++; }
+  }
+  return n? s/n : 0;
+}
+
+function midY(pose){
+  const lh=kp(pose,"left_hip"), rh=kp(pose,"right_hip");
+  const ls=kp(pose,"left_shoulder"), rs=kp(pose,"right_shoulder");
+  const hipOk=lh&&rh&&lh.score>0.2&&rh.score>0.2;
+  const shOk=ls&&rs&&ls.score>0.2&&rs.score>0.2;
+  if(hipOk) return (lh.y+rh.y)/2;
+  if(shOk) return (ls.y+rs.y)/2;
+  return null;
+}
+function midX(pose){
+  const lh=kp(pose,"left_hip"), rh=kp(pose,"right_hip");
+  const ls=kp(pose,"left_shoulder"), rs=kp(pose,"right_shoulder");
+  const hipOk=lh&&rh&&lh.score>0.2&&rh.score>0.2;
+  const shOk=ls&&rs&&ls.score>0.2&&rs.score>0.2;
+  if(hipOk) return (lh.x+rh.x)/2;
+  if(shOk) return (ls.x+rs.x)/2;
+  return null;
+}
+
+function drawPose(pose){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="rgba(0,0,0,.15)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  if(!pose) return;
+
+  for(const k of pose.keypoints){
+    if((k.score??0)<0.25) continue;
+    ctx.beginPath();
+    ctx.arc(k.x,k.y,5,0,Math.PI*2);
+    ctx.fillStyle="rgba(34,197,94,.95)";
+    ctx.fill();
+  }
+
+  // Chair A/B
+  if(app.chair.yA!=null){
+    ctx.strokeStyle="rgba(74,222,128,.9)"; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(0,app.chair.yA); ctx.lineTo(canvas.width,app.chair.yA); ctx.stroke();
+    ctx.fillStyle="rgba(74,222,128,.9)"; ctx.fillText("A (Stand)",10,app.chair.yA-8);
+  }
+  if(app.chair.yB!=null){
+    ctx.strokeStyle="rgba(251,191,36,.9)"; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(0,app.chair.yB); ctx.lineTo(canvas.width,app.chair.yB); ctx.stroke();
+    ctx.fillStyle="rgba(251,191,36,.9)"; ctx.fillText("B (Sit)",10,app.chair.yB-8);
+  }
+
+  // Balance A
+  const leg = $("balanceLeg").value;
+  const balObj = (leg==="left") ? app.balance.left : app.balance.right;
+  if(balObj.yA!=null){
+    ctx.strokeStyle="rgba(147,197,253,.9)"; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(0,balObj.yA); ctx.lineTo(canvas.width,balObj.yA); ctx.stroke();
+    ctx.fillStyle="rgba(147,197,253,.9)"; ctx.fillText("A (Stable)",10,balObj.yA-8);
+  }
+}
+
+async function loop(){
+  if(app.stopFlag || !app.detector || !app.camOn) return;
+
+  const poses = await app.detector.estimatePoses(video, {maxPoses:1, flipHorizontal:true});
+  const pose = poses?.[0] || null;
+  app.lastPose = pose;
+  app.poseConf = poseConfidence(pose);
+  $("kpiConf").textContent = app.poseConf ? app.poseConf.toFixed(2) : "—";
+
+  drawPose(pose);
+
+  const mode = $("testMode").value;
+  if(mode==="chair") updateChair(pose);
+  else updateBalance(pose);
+
+  app.rafId = requestAnimationFrame(loop);
+}
+
+function startLoop(){
+  app.stopFlag=false;
+  cancelAnimationFrame(app.rafId);
+  loop();
+}
+
+function stopAll(){
+  app.stopFlag=true;
+  $("kpiStatus").textContent="Stopped";
+  $("btnStopAll").disabled=true;
+  if(video.srcObject){
+    for(const t of video.srcObject.getTracks()) t.stop();
+    video.srcObject=null;
+  }
+  app.camOn=false;
+}
+
+/* =========================
+   Chair Stand Logic
+========================= */
+function zoneFromY(y,yA,yB){
+  if(y==null||yA==null||yB==null) return "unknown";
+  const tol=Math.abs(yB-yA)*0.18;
+  const dA=Math.abs(y-yA), dB=Math.abs(y-yB);
+  if(dA<=tol) return "stand";
+  if(dB<=tol) return "sit";
+  return (dA<dB)?"stand":"sit";
+}
+
+function updateChair(pose){
+  if(!app.chair.started){
+    $("kpiStatus").textContent="Ready (Chair)";
+    $("kpiTimer").textContent="0.0s";
+    $("kpiReps").textContent=String(app.chair.reps);
+    return;
+  }
+  const elapsed=(now()-app.chair.startTs)/1000;
+  $("kpiTimer").textContent=elapsed.toFixed(1)+"s";
+  if(elapsed>=app.chair.protocolSec){ finishChair(); return; }
+
+  const y = pose?midY(pose):null;
+  if(app.poseConf<0.25 || y==null) return;
+
+  const state=zoneFromY(y,app.chair.yA,app.chair.yB);
+  const t=now(), minGap=350;
+  if(app.chair.lastState==="sit" && state==="stand" && (t-app.chair.lastSwitchTs)>minGap){
+    app.chair.reps++;
+    app.chair.lastSwitchTs=t;
+    $("kpiReps").textContent=String(app.chair.reps);
+  }
+  if(state!==app.chair.lastState) app.chair.lastState=state;
+  $("kpiStatus").textContent="Running (Chair)";
+}
+
+function canStartChair(){ return app.camOn && app.chair.yA!=null && app.chair.yB!=null; }
+
+function startChair(){
+  app.chair.protocolSec=Number($("chairProtocol").value);
+  app.chair.reps=0;
+  app.chair.started=true;
+  app.chair.done=false;
+  app.chair.startTs=now();
+  app.chair.lastState="unknown";
+  app.chair.lastSwitchTs=now();
+  $("kpiReps").textContent="0";
+  $("kpiTimer").textContent="0.0s";
+  $("kpiStatus").textContent="Running (Chair)";
+}
+
+function finishChair(){
+  app.chair.started=false;
+  app.chair.done=true;
+  $("kpiStatus").textContent="Chair Completed";
+  $("pChair").textContent=`${app.chair.reps} reps (${app.chair.protocolSec}s)`;
+  checkFinishReady();
+}
+
+/* =========================
+   Balance Logic
+========================= */
+function liftedFootOk(pose, stanceLeg){
+  const support = kp(pose, stanceLeg==="left" ? "left_ankle" : "right_ankle");
+  const lift    = kp(pose, stanceLeg==="left" ? "right_ankle" : "left_ankle");
+  if(!support||!lift) return false;
+  if((support.score??0)<0.2||(lift.score??0)<0.2) return false;
+  return (support.y - lift.y) > (canvas.height*0.03);
+}
+
+function balanceLost(pose, stanceLeg, yA){
+  if(!pose||yA==null) return true;
+  if(!liftedFootOk(pose, stanceLeg)) return true;
+
+  const y=midY(pose), x=midX(pose);
+  const tolY=canvas.height*0.035, tolX=canvas.width*0.06;
+  if(y==null || Math.abs(y-yA)>tolY) return true;
+
+  if(app.balance._x0==null && x!=null) app.balance._x0=x;
+  if(x!=null && app.balance._x0!=null && Math.abs(x-app.balance._x0)>tolX) return true;
+
+  const support = kp(pose, stanceLeg==="left" ? "left_ankle" : "right_ankle");
+  if(support && (support.score??0)>0.2){
+    if(app.balance._a0==null) app.balance._a0={x:support.x,y:support.y};
+    const dx=Math.abs(support.x-app.balance._a0.x);
+    const dy=Math.abs(support.y-app.balance._a0.y);
+    if(dx>canvas.width*0.08 || dy>canvas.height*0.06) return true;
+  }
+  return false;
+}
+
+function updateBalance(pose){
+  if(!app.balance.started){
+    $("kpiStatus").textContent="Ready (Balance)";
+    $("kpiTimer").textContent="0.0s";
+    return;
+  }
+  const leg=app.balance.runningLeg;
+  const target=(leg==="left")?app.balance.left:app.balance.right;
+  const t=now();
+
+  if(!app.balance.stableStarted){
+    $("kpiStatus").textContent="Stabilising…";
+    const y=pose?midY(pose):null;
+    const confOk=app.poseConf>=0.25;
+    if(confOk && y!=null && target.yA!=null){
+      const close=Math.abs(y-target.yA) <= canvas.height*0.02;
+      const okLift=liftedFootOk(pose, leg);
+      if(close && okLift){
+        if(!app.balance.stableTs) app.balance.stableTs=t;
+        if((t-app.balance.stableTs)>=450){
+          app.balance.stableStarted=true;
+          app.balance.startTs=t;
+        }
+      } else app.balance.stableTs=0;
+    }
+    $("kpiTimer").textContent="0.0s";
+    return;
+  }
+
+  const elapsed=(t-app.balance.startTs)/1000;
+  $("kpiTimer").textContent=elapsed.toFixed(1)+"s";
+  $("kpiStatus").textContent=`Running (Balance: ${leg.toUpperCase()})`;
+
+  const lost = (app.poseConf<0.25) || balanceLost(pose, leg, target.yA);
+  if(lost) finishBalance(elapsed);
+}
+
+function canStartBalance(){
+  const leg=$("balanceLeg").value;
+  const target=(leg==="left")?app.balance.left:app.balance.right;
+  return app.camOn && target.yA!=null;
+}
+
+function startBalance(){
+  const leg=$("balanceLeg").value;
+  app.balance.runningLeg=leg;
+  app.balance.started=true;
+  app.balance.stableStarted=false;
+  app.balance.stableTs=0;
+  app.balance.startTs=0;
+  app.balance._x0=null;
+  app.balance._a0=null;
+  $("kpiTimer").textContent="0.0s";
+  $("kpiStatus").textContent="Stabilising…";
+}
+
+function finishBalance(seconds){
+  app.balance.started=false;
+  const leg=app.balance.runningLeg;
+  const target=(leg==="left")?app.balance.left:app.balance.right;
+  target.time=clamp(seconds,0,120);
+  target.done=true;
+  $("kpiStatus").textContent=`Balance ${leg.toUpperCase()} Completed`;
+  if(leg==="left") $("pBalL").textContent=`${target.time.toFixed(1)}s`;
+  else $("pBalR").textContent=`${target.time.toFixed(1)}s`;
+  checkFinishReady();
+}
+
+/* =========================
+   Results + Storage
+========================= */
+function chairInterpretation(){
+  const u=app.user, reps=app.chair.reps, sec=app.chair.protocolSec;
+  if(sec===30){
+    const band=ageBand30(u.age);
+    const norm=band?chair30Norms[band][u.gender]:null;
+    if(!band||norm==null){
+      return { title:"30s Chair Stand", ref:"Reference not available for this age band.", verdict:`${reps} reps`, cls:"muted",
+        detail:"Use your result as a personal baseline and track improvement over time." };
+    }
+    const ok=reps>=norm;
+    return {
+      title:"30s Chair Stand",
+      ref:`Reference (Age ${band}, ${u.gender==="men"?"Men":"Women"}): ${norm} reps`,
+      verdict:`${reps} reps — ${ok?"Meets or above reference":"Below reference"}`,
+      cls: ok ? "ok" : "warn",
+      detail:"Strength and endurance can improve with safe training (sit-to-stand practice, squats-to-chair, step-ups, resistance training)."
+    };
+  } else {
+    const ref=chair1MinRef(u.age);
+    if(!ref){
+      return { title:"1-Min Chair Stand", ref:"Reference not available for this age.", verdict:`${reps} reps`, cls:"muted",
+        detail:"Use your result as a baseline and track improvement over time." };
+    }
+    let cls="warn", verdict="Below typical range";
+    if(reps>=ref.low && reps<=ref.high){ cls="ok"; verdict="Within typical range"; }
+    if(reps>ref.high){ cls="ok"; verdict="Above typical range"; }
+    return { title:"1-Min Chair Stand", ref:`Typical range: ${ref.low}–${ref.high}+ reps`, verdict:`${reps} reps — ${verdict}`, cls,
+      detail:"Extra endurance marker. Progress gradually to avoid over-fatigue." };
+  }
+}
+
+function buildResultsHTML(){
+  const u=app.user;
+  const chair=chairInterpretation();
+  const balL=interpretBalance(app.balance.left.time);
+  const balR=interpretBalance(app.balance.right.time);
+  return `
+    <div class="badge">Participant: <strong>${escapeHtml(u.name)}</strong> • Age: <strong>${u.age}</strong> • Gender: <strong>${u.gender==="men"?"Male":"Female"}</strong></div>
+    <div class="badge">HP: <strong>${escapeHtml(u.phone)}</strong></div>
+
+    <div class="hr"></div>
+
+    <h2>${chair.title}</h2>
+    <p class="small muted">${chair.ref}</p>
+    <p class="${chair.cls}" style="font-weight:800">${chair.verdict}</p>
+    <p class="small">${chair.detail}</p>
+
+    <div class="hr"></div>
+
+    <h2>Single-Leg Balance</h2>
+    <p><strong>Left:</strong> ${app.balance.left.time!=null ? app.balance.left.time.toFixed(1)+"s" : "—"} <span class="${balL.cls} small">(${balL.label})</span></p>
+    <p><strong>Right:</strong> ${app.balance.right.time!=null ? app.balance.right.time.toFixed(1)+"s" : "—"} <span class="${balR.cls} small">(${balR.label})</span></p>
+
+    <div class="notice small" style="margin-top:10px">
+      <strong>Encouragement:</strong> Strength and balance can improve at any age with consistent, safe training.
+      If you want a personalised plan, contact Coach Daniel.
+    </div>
+  `;
+}
+
+function saveLocal(){
+  const payload={
+    savedAt:new Date().toISOString(),
+    user:app.user,
+    chair:{ protocolSec:app.chair.protocolSec, reps:app.chair.reps },
+    balance:{ left:app.balance.left.time, right:app.balance.right.time }
+  };
+  localStorage.setItem("coachDanielSPPB_last", JSON.stringify(payload));
+  return payload;
+}
+
+function loadLocal(){
+  const raw=localStorage.getItem("coachDanielSPPB_last");
+  if(!raw) return null;
+  try{ return JSON.parse(raw); }catch(e){ return null; }
+}
+
+function checkFinishReady(){
+  $("btnFinish").disabled = !(app.chair.done && app.balance.left.done && app.balance.right.done);
+}
+
+/* =========================
+   PDF Export
+========================= */
+function exportPdf(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:"pt", format:"a4" });
+
+  const u=app.user || {name:"",age:"",gender:"",phone:""};
+  const genderLabel = u.gender==="men" ? "Male" : (u.gender==="women" ? "Female" : "");
+
+  const chair=chairInterpretation();
+  const balL=interpretBalance(app.balance.left.time);
+  const balR=interpretBalance(app.balance.right.time);
+
+  const margin=48;
+  let y=56;
+
+  const addText=(text,size=12,bold=false)=>{
+    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.setFontSize(size);
+    const lines=doc.splitTextToSize(text, 595 - margin*2);
+    doc.text(lines, margin, y);
+    y += lines.length * (size + 4);
+  };
+  const hr=()=>{
+    y += 6;
+    doc.setDrawColor(200);
+    doc.line(margin, y, 595 - margin, y);
+    y += 14;
+  };
+
+  addText("Senior Physical Performance Battery Test", 18, true);
+  addText("Welcome to Coach Daniel SPPB Test", 12, false);
+  hr();
+
+  addText(`Participant: ${u.name}`, 12, true);
+  addText(`Age: ${u.age}   Gender: ${genderLabel}`, 12, false);
+  addText(`HP: ${u.phone}`, 12, false);
+  addText(`Date: ${new Date().toLocaleString()}`, 11, false);
+  hr();
+
+  addText(chair.title, 14, true);
+  addText(`Result: ${app.chair.reps} reps (${app.chair.protocolSec}s)`, 12, false);
+  addText(`Reference: ${chair.ref}`, 11, false);
+  addText(`Interpretation: ${chair.verdict}`, 11, true);
+  addText(`Notes: ${chair.detail}`, 11, false);
+  hr();
+
+  addText("Single-Leg Balance", 14, true);
+  addText(`Left:  ${app.balance.left.time!=null ? app.balance.left.time.toFixed(1)+"s" : "—"}  (${balL.label})`, 11, false);
+  addText(`Right: ${app.balance.right.time!=null ? app.balance.right.time.toFixed(1)+"s" : "—"}  (${balR.label})`, 11, false);
+  hr();
+
+  addText("Important Safety & Disclaimer", 12, true);
+  addText("This assessment is for fitness screening and education only. It is not a medical diagnosis.", 10, false);
+  addText("Stop immediately if you feel dizzy, chest pain, severe breathlessness, sharp joint pain, or unsafe.", 10, false);
+  addText("If you have frequent falls or concerning symptoms, consult a healthcare professional.", 10, false);
+  hr();
+
+  addText("Contact", 12, true);
+  addText("Coach Daniel Phua • HP: 98163603", 12, false);
+
+  const safeName=(u.name||"Participant").replace(/[^\w\-]+/g,"_");
+  doc.save(`CoachDaniel_SPPB_${safeName}_${Date.now()}.pdf`);
+}
+
+/* =========================
+   UI Events
+========================= */
+$("btnStart").onclick=()=>show("screenRegister");
+$("btnBack1").onclick=()=>show("screenWelcome");
+$("btnBack2").onclick=()=>show("screenRegister");
+$("btnBack3").onclick=()=>show("screenGuide");
+
+$("btnLoadLast").onclick=()=>{
+  const p=loadLocal();
+  if(!p){ alert("No saved results found on this device yet."); return; }
+  show("screenResults");
+  $("resultsBlock").innerHTML = `
+    <h2>Last Saved Result</h2>
+    <pre class="small" style="white-space:pre-wrap; color: var(--muted)">${escapeHtml(JSON.stringify(p,null,2))}</pre>
+  `;
+};
+
+$("btnContinue1").onclick=()=>{
+  const name=$("fName").value.trim();
+  const age=Number($("fAge").value);
+  const gender=$("fGender").value;
+  const phone=$("fPhone").value.trim();
+  if(!name || !age || !gender || !phone){ alert("Please complete name, age, gender, and HP no."); return; }
+  if(!($("cAgree1").checked && $("cAgree2").checked && $("cAgree3").checked)){ alert("Please tick all consent checkboxes to proceed."); return; }
+  app.user={name,age,gender,phone}; app.consent=true;
+  show("screenGuide");
+};
+
+$("btnContinue2").onclick=()=>show("screenTests");
+
+$("btnInitCamera").onclick=async()=>{
+  try{
+    await enableCamera();
+    $("btnInitCamera").disabled=true;
+    $("btnStartChair").disabled=!canStartChair();
+    $("btnStartBalance").disabled=!canStartBalance();
+  }catch(e){
+    console.error(e);
+    alert("Camera could not be started. Check permissions and try again.");
+  }
+};
+
+$("btnStopAll").onclick=()=>{
+  app.chair.started=false; app.balance.started=false;
+  stopAll();
+};
+
+$("testMode").onchange=()=>{
+  const mode=$("testMode").value;
+  $("chairOptions").classList.toggle("hidden", mode!=="chair");
+  $("balanceOptions").classList.toggle("hidden", mode!=="balance");
+};
+
+$("btnSetA").onclick=()=>{
+  if(!app.lastPose){ alert("No pose detected yet."); return; }
+  const y=midY(app.lastPose);
+  if(y==null){ alert("Cannot read position. Improve lighting / keep full body in frame."); return; }
+  app.chair.yA=y;
+  $("chairCalibInfo").textContent=`A: ${Math.round(y)} | B: ${app.chair.yB!=null?Math.round(app.chair.yB):"—"}`;
+  $("btnStartChair").disabled=!canStartChair();
+};
+$("btnSetB").onclick=()=>{
+  if(!app.lastPose){ alert("No pose detected yet."); return; }
+  const y=midY(app.lastPose);
+  if(y==null){ alert("Cannot read position. Improve lighting / keep full body in frame."); return; }
+  app.chair.yB=y;
+  $("chairCalibInfo").textContent=`A: ${app.chair.yA!=null?Math.round(app.chair.yA):"—"} | B: ${Math.round(y)}`;
+  $("btnStartChair").disabled=!canStartChair();
+};
+$("btnStartChair").onclick=()=>{
+  if(!canStartChair()){ alert("Enable camera + set A & B first."); return; }
+  startChair();
+};
+$("btnManualChair").onclick=()=>{
+  const sec=Number($("chairProtocol").value);
+  const reps=prompt(`Enter chair stand reps completed in ${sec} seconds:`);
+  if(reps==null) return;
+  const n=Number(reps);
+  if(!Number.isFinite(n) || n<0){ alert("Invalid number."); return; }
+  app.chair.protocolSec=sec; app.chair.reps=Math.round(n);
+  app.chair.done=true; app.chair.started=false;
+  $("pChair").textContent=`${app.chair.reps} reps (${sec}s)`;
+  checkFinishReady();
+};
+
+$("btnBalSetA").onclick=()=>{
+  const leg=$("balanceLeg").value;
+  if(!app.lastPose){ alert("No pose detected yet."); return; }
+  const y=midY(app.lastPose);
+  if(y==null){ alert("Cannot read stable stance. Improve lighting / full body in frame."); return; }
+  if(!liftedFootOk(app.lastPose, leg)){
+    const ok=confirm("Lifted foot may not be clearly off the ground. Set A anyway?");
+    if(!ok) return;
+  }
+  const target=(leg==="left")?app.balance.left:app.balance.right;
+  target.yA=y;
+  $("balCalibInfo").textContent=`A: ${Math.round(y)}`;
+  $("btnStartBalance").disabled=!canStartBalance();
+};
+$("balanceLeg").onchange=()=>{
+  const leg=$("balanceLeg").value;
+  const target=(leg==="left")?app.balance.left:app.balance.right;
+  $("balCalibInfo").textContent=`A: ${target.yA!=null?Math.round(target.yA):"—"}`;
+  $("btnStartBalance").disabled=!canStartBalance();
+};
+$("btnStartBalance").onclick=()=>{
+  if(!canStartBalance()){ alert("Enable camera + set A for selected leg first."); return; }
+  startBalance();
+};
+$("btnManualBalance").onclick=()=>{
+  const leg=$("balanceLeg").value;
+  const sec=prompt(`Enter single-leg balance time for ${leg.toUpperCase()} leg (seconds):`);
+  if(sec==null) return;
+  const n=Number(sec);
+  if(!Number.isFinite(n) || n<0){ alert("Invalid number."); return; }
+  const target=(leg==="left")?app.balance.left:app.balance.right;
+  target.time=clamp(n,0,120); target.done=true;
+  if(leg==="left") $("pBalL").textContent=`${target.time.toFixed(1)}s`;
+  else $("pBalR").textContent=`${target.time.toFixed(1)}s`;
+  checkFinishReady();
+};
+
+$("btnFinish").onclick=()=>{
+  saveLocal();
+  show("screenResults");
+  $("resultsBlock").innerHTML=buildResultsHTML();
+};
+
+$("btnExport").onclick=()=>{
+  const payload=saveLocal();
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download="CoachDaniel_SPPB_Result.json"; a.click();
+  URL.revokeObjectURL(url);
+};
+
+$("btnExportPdf").onclick=()=>{
+  try{ saveLocal(); exportPdf(); }
+  catch(e){ console.error(e); alert("PDF export failed. Try JSON export."); }
+};
+
+$("btnCopyContact").onclick=async()=>{
+  const text="Coach Daniel Phua\nHP: 98163603";
+  try{ await navigator.clipboard.writeText(text); alert("Coach contact copied."); }
+  catch(e){ prompt("Copy this contact:", text); }
+};
+
+$("btnRestart").onclick=()=>location.reload();
+
+show("screenWelcome");
+</script>
+</body>
+</html>
