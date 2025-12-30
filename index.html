@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Coach Daniel – SPPB Calibration</title>
+<title>Coach Daniel – SPPB Chair Stand</title>
 
 <style>
 html,body{
   margin:0; padding:0;
   background:#000;
   color:#fff;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  font-family: system-ui, -apple-system;
 }
 #stage{
   position:relative;
@@ -29,25 +29,37 @@ canvas{ pointer-events:none; }
 
 #hud{
   position:absolute;
-  bottom:16px;
+  bottom:12px;
   left:0; right:0;
   display:flex;
   justify-content:center;
-  gap:10px;
+  gap:8px;
+  flex-wrap:wrap;
   z-index:10;
 }
 
-button{
-  padding:12px 14px;
+button,select{
+  padding:10px 14px;
   font-size:14px;
   border-radius:12px;
   border:none;
   font-weight:800;
 }
 
-#btnStart{ background:#22c55e; color:#000; }
-#btnA{ background:#3b82f6; }
-#btnB{ background:#f59e0b; }
+#startCam{ background:#22c55e; color:#000; }
+#aBtn{ background:#3b82f6; }
+#bBtn{ background:#f59e0b; }
+#startTest{ background:#16a34a; color:#000; }
+#stopTest{ background:#991b1b; }
+
+#stats{
+  position:absolute;
+  top:10px; left:10px;
+  background:rgba(0,0,0,.5);
+  padding:10px 12px;
+  border-radius:12px;
+  font-size:14px;
+}
 </style>
 </head>
 
@@ -57,10 +69,24 @@ button{
   <video id="video" autoplay playsinline muted></video>
   <canvas id="canvas"></canvas>
 
+  <div id="stats">
+    ⏱ <span id="timer">0.0</span>s<br>
+    🔢 Reps: <span id="reps">0</span><br>
+    Status: <span id="status">Ready</span>
+  </div>
+
   <div id="hud">
-    <button id="btnStart">Start Camera</button>
-    <button id="btnA">Calibrate A</button>
-    <button id="btnB">Calibrate B</button>
+    <button id="startCam">Start Camera</button>
+    <button id="aBtn">Calibrate A</button>
+    <button id="bBtn">Calibrate B</button>
+
+    <select id="duration">
+      <option value="30">30s</option>
+      <option value="60">1 min</option>
+    </select>
+
+    <button id="startTest">Start Test</button>
+    <button id="stopTest">Stop</button>
   </div>
 </div>
 
@@ -73,58 +99,61 @@ const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-let detector;
-let running = false;
-let lastPose = null;
+let detector, running=false, lastPose=null;
+let yA=null, yB=null;
+let reps=0, lastState="unknown";
+let testing=false, startTime=0;
+let testDuration=30;
+let lastSwitch=0;
 
-// Calibration values
-let yA = null;
-let yB = null;
-
-// --- Utilities ---
-function midHipY(pose){
-  const lh = pose.keypoints.find(k=>k.name==="left_hip");
-  const rh = pose.keypoints.find(k=>k.name==="right_hip");
-  if(!lh || !rh) return null;
-  if(lh.score<0.3 || rh.score<0.3) return null;
-  return (lh.y + rh.y) / 2;
+// --- Utils ---
+function midHipY(p){
+  const lh=p.keypoints.find(k=>k.name==="left_hip");
+  const rh=p.keypoints.find(k=>k.name==="right_hip");
+  if(!lh||!rh||lh.score<0.3||rh.score<0.3) return null;
+  return (lh.y+rh.y)/2;
+}
+function zone(y){
+  if(yA==null||yB==null||y==null) return "unknown";
+  const tol=Math.abs(yB-yA)*0.25;
+  if(Math.abs(y-yA)<tol) return "stand";
+  if(Math.abs(y-yB)<tol) return "sit";
+  return lastState;
 }
 
 // --- Camera ---
 async function startCamera(){
-  const stream = await navigator.mediaDevices.getUserMedia({
+  const stream=await navigator.mediaDevices.getUserMedia({
     video:{ facingMode:"environment", width:{ideal:720}, height:{ideal:1280} },
     audio:false
   });
-  video.srcObject = stream;
+  video.srcObject=stream;
   await video.play();
 
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
 
   await tf.ready();
-  detector = await poseDetection.createDetector(
+  detector=await poseDetection.createDetector(
     poseDetection.SupportedModels.MoveNet,
     { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
   );
-
-  running = true;
+  running=true;
   loop();
 }
 
-// --- Main Loop ---
+// --- Loop ---
 async function loop(){
   if(!running) return;
-
   ctx.drawImage(video,0,0,canvas.width,canvas.height);
 
-  const poses = await detector.estimatePoses(video);
-  const pose = poses[0];
-  lastPose = pose;
+  const poses=await detector.estimatePoses(video);
+  const pose=poses[0];
+  lastPose=pose;
 
   if(pose){
     for(const k of pose.keypoints){
-      if(k.score > 0.3){
+      if(k.score>0.3){
         ctx.beginPath();
         ctx.arc(k.x,k.y,6,0,Math.PI*2);
         ctx.fillStyle="#22c55e";
@@ -134,48 +163,62 @@ async function loop(){
   }
 
   // Draw calibration lines
-  ctx.lineWidth = 3;
-  ctx.font = "18px system-ui";
+  ctx.lineWidth=3; ctx.font="16px system-ui";
+  if(yA){ ctx.strokeStyle="#3b82f6"; ctx.beginPath(); ctx.moveTo(0,yA); ctx.lineTo(canvas.width,yA); ctx.stroke(); }
+  if(yB){ ctx.strokeStyle="#f59e0b"; ctx.beginPath(); ctx.moveTo(0,yB); ctx.lineTo(canvas.width,yB); ctx.stroke(); }
 
-  if(yA !== null){
-    ctx.strokeStyle = "#3b82f6";
-    ctx.beginPath();
-    ctx.moveTo(0,yA);
-    ctx.lineTo(canvas.width,yA);
-    ctx.stroke();
-    ctx.fillStyle="#3b82f6";
-    ctx.fillText("A – Standing",10,yA-8);
-  }
+  if(testing && pose){
+    const y=midHipY(pose);
+    const state=zone(y);
+    const now=performance.now();
 
-  if(yB !== null){
-    ctx.strokeStyle = "#f59e0b";
-    ctx.beginPath();
-    ctx.moveTo(0,yB);
-    ctx.lineTo(canvas.width,yB);
-    ctx.stroke();
-    ctx.fillStyle="#f59e0b";
-    ctx.fillText("B – Sitting",10,yB-8);
+    if(lastState==="sit" && state==="stand" && now-lastSwitch>500){
+      reps++;
+      lastSwitch=now;
+      document.getElementById("reps").textContent=reps;
+    }
+    lastState=state;
+
+    const elapsed=(now-startTime)/1000;
+    document.getElementById("timer").textContent=elapsed.toFixed(1);
+    if(elapsed>=testDuration){
+      stopTest();
+    }
   }
 
   requestAnimationFrame(loop);
 }
 
-// --- Buttons ---
-document.getElementById("btnStart").onclick = startCamera;
+// --- Controls ---
+function stopTest(){
+  testing=false;
+  document.getElementById("status").textContent="Completed";
+}
 
-document.getElementById("btnA").onclick = ()=>{
-  if(!lastPose) return alert("No person detected yet");
-  const y = midHipY(lastPose);
-  if(y==null) return alert("Cannot detect hips clearly");
-  yA = y;
+document.getElementById("startCam").onclick=startCamera;
+
+document.getElementById("aBtn").onclick=()=>{
+  if(!lastPose) return alert("No pose detected");
+  yA=midHipY(lastPose);
 };
 
-document.getElementById("btnB").onclick = ()=>{
-  if(!lastPose) return alert("No person detected yet");
-  const y = midHipY(lastPose);
-  if(y==null) return alert("Cannot detect hips clearly");
-  yB = y;
+document.getElementById("bBtn").onclick=()=>{
+  if(!lastPose) return alert("No pose detected");
+  yB=midHipY(lastPose);
 };
+
+document.getElementById("startTest").onclick=()=>{
+  if(yA==null||yB==null) return alert("Calibrate A and B first");
+  reps=0;
+  lastState="unknown";
+  startTime=performance.now();
+  testDuration=Number(document.getElementById("duration").value);
+  testing=true;
+  document.getElementById("reps").textContent=0;
+  document.getElementById("status").textContent="Running";
+};
+
+document.getElementById("stopTest").onclick=stopTest;
 </script>
 
 </body>
