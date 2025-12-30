@@ -13,6 +13,7 @@
       --warn:#fbbf24;
       --bad:#fb7185;
       --border:rgba(255,255,255,.12);
+      --shadow: rgba(0,0,0,.35);
     }
     *{box-sizing:border-box}
     body{
@@ -24,11 +25,11 @@
       padding:16px 16px 10px;
       position:sticky; top:0; backdrop-filter: blur(10px);
       background: rgba(11,18,32,.75); border-bottom: 1px solid var(--border);
-      z-index: 5;
+      z-index: 20;
     }
     header .title{font-weight:800; font-size:16px}
     header .sub{color:var(--muted); font-size:12px; margin-top:4px}
-    main{padding:16px; max-width: 860px; margin:0 auto;}
+    main{padding:14px; max-width: 920px; margin:0 auto;}
     .card{
       background: rgba(17,27,46,.82);
       border:1px solid var(--border);
@@ -53,7 +54,7 @@
     .btns{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
     button{
       border:0; border-radius: 12px;
-      padding: 12px 14px; font-weight:700;
+      padding: 12px 14px; font-weight:800;
       cursor:pointer;
       background: #182746; color: var(--text);
       border: 1px solid var(--border);
@@ -61,30 +62,6 @@
     button.primary{background: linear-gradient(90deg, #16a34a, #22c55e); color:#06110a; border:0}
     button.danger{background: #2a1420; border:1px solid rgba(251,113,133,.35)}
     button:disabled{opacity:.55; cursor:not-allowed}
-    .grid2{display:grid; grid-template-columns: 1fr; gap:12px}
-    @media(min-width:740px){ .grid2{grid-template-columns: 1.2fr .8fr} }
-    .videoWrap{
-      position:relative; width:100%; aspect-ratio: 9/16;
-      border-radius: 16px; overflow:hidden;
-      border:1px solid var(--border);
-      background:#000;
-    }
-    video,canvas{
-      position:absolute; inset:0; width:100%; height:100%;
-      object-fit:cover;
-    }
-    .overlayBar{
-      position:absolute; left:10px; right:10px; bottom:10px;
-      display:flex; gap:8px; flex-wrap:wrap;
-      background: rgba(0,0,0,.35);
-      border:1px solid rgba(255,255,255,.15);
-      border-radius: 14px;
-      padding: 10px;
-    }
-    .kpi{display:flex; flex-direction:column; gap:2px; min-width: 120px}
-    .kpi .v{font-weight:900; font-size:18px}
-    .kpi .t{font-size:12px; color: var(--muted)}
-    .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
     .small{font-size:12px}
     .hr{height:1px; background: var(--border); margin: 12px 0}
     .notice{
@@ -105,14 +82,100 @@
       font-size: 12px; color: var(--muted);
       margin-right:8px; margin-top:6px;
     }
-    .footerActions{display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; margin-top: 10px}
     .hidden{display:none !important}
+
+    /* Camera stage (sticky-like within page) */
+    .stageWrap{
+      position: sticky;
+      top: 74px; /* below header */
+      z-index: 15;
+      margin: 12px 0;
+    }
+    .stage{
+      position:relative;
+      width:100%;
+      max-width: 520px;
+      margin: 0 auto;
+      aspect-ratio: 9/16;
+      border-radius: 18px;
+      overflow:hidden;
+      border:1px solid var(--border);
+      background:#000;
+      box-shadow: 0 18px 40px var(--shadow);
+      touch-action: none; /* enable custom pinch */
+    }
+    video,canvas{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit: contain; /* show whole body, less crop */
+      background:#000;
+    }
+
+    .hudTop{
+      position:absolute; left:10px; right:10px; top:10px;
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+      pointer-events:none;
+    }
+    .hudChip{
+      pointer-events:auto;
+      background: rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size:12px;
+      color: var(--text);
+      backdrop-filter: blur(8px);
+      display:inline-flex; gap:8px; align-items:center;
+    }
+    .hudChip strong{font-weight:900}
+    .hudBottom{
+      position:absolute; left:10px; right:10px; bottom:10px;
+      display:grid; gap:8px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.15);
+      border-radius: 16px;
+      padding: 10px;
+      backdrop-filter: blur(10px);
+    }
+    .hudRow{
+      display:flex; gap:8px; flex-wrap:wrap;
+      align-items:center; justify-content:space-between;
+    }
+    .hudBtns{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .miniBtn{
+      padding:10px 12px;
+      border-radius: 12px;
+      font-weight:900;
+      font-size:12px;
+    }
+    .miniBtn.primary{background: linear-gradient(90deg, #16a34a, #22c55e); color:#06110a; border:0}
+    .miniBtn.danger{background: #2a1420; border:1px solid rgba(251,113,133,.35)}
+    .miniBtn.ghost{background: rgba(24,39,70,.85)}
+    .kpis{
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+    .kpi{
+      min-width: 98px;
+      display:flex; flex-direction:column;
+      gap:2px;
+    }
+    .kpi .v{font-weight:950; font-size:16px}
+    .kpi .t{font-size:11px; color: var(--muted)}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+
+    .slider{ width: 160px; }
+
+    /* Layout below stage */
+    .grid2{display:grid; grid-template-columns:1fr; gap:12px}
+    @media(min-width:820px){ .grid2{grid-template-columns: 1fr 1fr} }
   </style>
 </head>
 <body>
 <header>
   <div class="title">Senior Physical Performance Battery Test</div>
-  <div class="sub">Welcome to Coach Daniel SPPB Test • Privacy: stored only on your device</div>
+  <div class="sub">Welcome to Coach Daniel SPPB Test • On-device only • Export PDF</div>
 </header>
 
 <main>
@@ -120,9 +183,9 @@
   <!-- Welcome -->
   <section id="screenWelcome" class="card">
     <h1>Welcome to Coach Daniel SPPB Test</h1>
-    <p class="muted">This tool supports general fitness screening and education. It is <strong>not</strong> a medical diagnosis.</p>
+    <p class="muted">Fitness screening & education only. Not a medical diagnosis.</p>
     <div class="notice small">
-      <strong>Stop immediately</strong> if you feel dizziness, chest pain, severe shortness of breath, sharp joint pain, or unwell.
+      <strong>Stop immediately</strong> if dizziness, chest pain, severe shortness of breath, sharp pain, or you feel unsafe.
     </div>
     <div class="btns">
       <button class="primary" id="btnStart">Start</button>
@@ -163,16 +226,13 @@
       <li>Use a <strong>stable chair</strong> (no wheels) on a non-slip floor.</li>
       <li>Wear <strong>proper footwear</strong> and clear obstacles.</li>
       <li>Have a caregiver/trainer nearby if you are frail or unsteady.</li>
-      <li>Do not proceed if you feel unwell or have uncontrolled symptoms.</li>
-      <li>Stop immediately if you feel dizziness, chest pain, severe breathlessness, sharp pain, or unsafe.</li>
+      <li>Stop immediately if you feel dizzy, chest pain, severe breathlessness, sharp pain, or unsafe.</li>
     </ul>
 
     <div class="hr"></div>
 
     <h2>Consent</h2>
-    <p class="small muted">
-      This is a <strong>non-diagnostic</strong> fitness screening and education tool. Results are general indicators and not medical advice.
-    </p>
+    <p class="small muted">This is a non-diagnostic screening tool. Results are general indicators and not medical advice.</p>
 
     <div class="card" style="margin:0; padding:12px; background: rgba(12,20,38,.6)">
       <label><input type="checkbox" id="cAgree1"> I understand this is not a medical diagnosis.</label>
@@ -190,28 +250,30 @@
   <section id="screenGuide" class="card hidden">
     <h1>Test Guide</h1>
     <div class="grid2">
-      <div>
-        <h2>Setup</h2>
+      <div class="card" style="margin:0; background: rgba(12,20,38,.55)">
+        <h2>Chair Stand Rules</h2>
         <ul class="small">
-          <li>Place phone on a stable surface (tripod/table) at about chest height.</li>
-          <li>Stand about <strong>2–3 metres</strong> away so full body is visible.</li>
-          <li>Ensure good lighting and minimal background movement.</li>
+          <li>Phone on tripod/table around chest height.</li>
+          <li>Stand roughly <strong>1.5–2.5m</strong> away (adjust so whole body fits).</li>
+          <li><strong>Arms crossed on chest</strong> during BOTH standing and sitting.</li>
+          <li>Calibrate:
+            <div>• <strong>Position A</strong> = Standing, arms crossed</div>
+            <div>• <strong>Position B</strong> = Sitting, arms crossed</div>
+          </li>
+          <li>Then press <strong>Start</strong>. Reps count when moving <strong>B → A</strong> (sit to stand).</li>
         </ul>
-
-        <h2>Tests</h2>
-        <ul class="small">
-          <li><strong>Chair Stand Test</strong> (30 seconds or 1 minute)</li>
-          <li><strong>Single-Leg Balance</strong> (Left then Right)</li>
-        </ul>
-
-        <div class="notice small">
-          Tip: If auto-detection struggles, you can enter reps/time manually.
-        </div>
       </div>
 
-      <div>
-        <h2>Camera & AI</h2>
-        <p class="small muted">Uses on-device pose estimation. No video is uploaded.</p>
+      <div class="card" style="margin:0; background: rgba(12,20,38,.55)">
+        <h2>Single-Leg Balance Rules</h2>
+        <ul class="small">
+          <li>Test <strong>Left leg</strong> first, then <strong>Right leg</strong>.</li>
+          <li>Calibrate <strong>Position A</strong> when stable on one leg.</li>
+          <li>Press <strong>Start</strong> → timer begins after stable → stops when balance is lost.</li>
+        </ul>
+
+        <div class="notice small">Tip: If AI struggles, use “Manual input” buttons.</div>
+
         <div class="btns">
           <button class="primary" id="btnContinue2">Proceed to Tests</button>
           <button id="btnBack2">Back</button>
@@ -221,64 +283,90 @@
   </section>
 
   <!-- Tests -->
-  <section id="screenTests" class="card hidden">
-    <h1>Tests</h1>
+  <section id="screenTests" class="hidden">
 
-    <div class="grid2">
-      <div>
-        <div class="videoWrap">
-          <video id="video" autoplay playsinline muted></video>
-          <canvas id="canvas"></canvas>
+    <!-- Sticky Camera Stage -->
+    <div class="stageWrap">
+      <div class="stage" id="stage">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="canvas"></canvas>
 
-          <div class="overlayBar">
-            <div class="kpi">
-              <div class="v" id="kpiStatus">—</div>
-              <div class="t">Status</div>
-            </div>
-            <div class="kpi">
-              <div class="v" id="kpiTimer">0.0s</div>
-              <div class="t">Timer</div>
-            </div>
-            <div class="kpi">
-              <div class="v" id="kpiReps">0</div>
-              <div class="t">Chair Reps</div>
-            </div>
-            <div class="kpi">
-              <div class="v" id="kpiConf">—</div>
-              <div class="t">Pose Confidence</div>
-            </div>
-          </div>
+        <!-- TOP HUD -->
+        <div class="hudTop">
+          <div class="hudChip"><strong id="hudMode">Chair</strong> <span id="hudSub" class="muted">Ready</span></div>
+          <div class="hudChip">Conf: <strong id="kpiConf">—</strong></div>
         </div>
 
-        <div class="card" style="margin-top:10px; padding:12px; background: rgba(12,20,38,.55)">
-          <h2 style="margin-bottom:8px">Camera Settings</h2>
-          <label>Camera to use</label>
-          <select id="cameraFacing">
-            <option value="environment" selected>Back camera (recommended)</option>
-            <option value="user">Front camera</option>
-          </select>
-          <div class="btns">
-            <button id="btnTestCamera">Test Camera View</button>
-            <button id="btnInitCamera" class="primary">Enable Camera</button>
-            <button id="btnStopAll" class="danger" disabled>Stop Test</button>
+        <!-- BOTTOM HUD -->
+        <div class="hudBottom">
+          <div class="hudRow">
+            <div class="kpis">
+              <div class="kpi">
+                <div class="v" id="kpiStatus">—</div>
+                <div class="t">Status</div>
+              </div>
+              <div class="kpi">
+                <div class="v" id="kpiTimer">0.0s</div>
+                <div class="t">Timer</div>
+              </div>
+              <div class="kpi">
+                <div class="v" id="kpiReps">0</div>
+                <div class="t">Reps</div>
+              </div>
+            </div>
           </div>
-          <div class="notice small" id="modelNote">
-            Tip: Use “Test Camera View” first. If the person can’t fit full body easily, switch camera and test again.
+
+          <div class="hudRow">
+            <div class="hudBtns">
+              <button class="miniBtn ghost" id="btnCalA">Calibrate A</button>
+              <button class="miniBtn ghost" id="btnCalB">Calibrate B</button>
+              <button class="miniBtn primary" id="btnStartTest">Start</button>
+              <button class="miniBtn danger" id="btnStopTest">Stop</button>
+            </div>
+          </div>
+
+          <div class="hudRow">
+            <div class="hudChip" style="flex:1 1 auto; justify-content:space-between">
+              <span>Camera</span>
+              <select id="cameraFacing" style="width:auto; padding:8px 10px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(0,0,0,.3); color:var(--text)">
+                <option value="environment" selected>Back</option>
+                <option value="user">Front</option>
+              </select>
+              <button class="miniBtn ghost" id="btnRestartCam" style="padding:8px 10px">Restart</button>
+            </div>
+          </div>
+
+          <div class="hudRow">
+            <div class="hudChip" style="flex:1 1 auto; justify-content:space-between">
+              <span>Zoom</span>
+              <input class="slider" id="zoomSlider" type="range" min="1" max="1" step="0.1" value="1" />
+              <span class="muted" id="zoomLabel">1.0×</span>
+            </div>
+          </div>
+
+          <div class="hudRow">
+            <div class="hudChip" style="flex:1 1 auto">
+              <span class="muted" id="calibInfo">A: — | B: —</span>
+            </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <div>
-        <h2>Choose Test</h2>
+    <!-- Below camera: settings + progress -->
+    <section class="card">
+      <h1>Tests</h1>
 
-        <div class="card" style="margin:0 0 10px; padding:12px; background: rgba(12,20,38,.55)">
+      <div class="grid2">
+        <div class="card" style="margin:0; background: rgba(12,20,38,.55)">
+          <h2>Test Settings</h2>
+
           <label>Test Mode</label>
           <select id="testMode">
-            <option value="chair">Chair Stand</option>
+            <option value="chair" selected>Chair Stand</option>
             <option value="balance">Single-Leg Balance</option>
           </select>
 
-          <!-- Chair -->
           <div id="chairOptions" style="margin-top:10px">
             <label>Protocol</label>
             <select id="chairProtocol">
@@ -286,72 +374,54 @@
               <option value="60">1 minute</option>
             </select>
 
-            <div class="hr"></div>
-            <div class="small muted">
-              Calibration:
-              <div>• <strong>Set A</strong> = Standing</div>
-              <div>• <strong>Set B</strong> = Sitting</div>
+            <div class="notice small" style="margin-top:10px">
+              Chair Stand: <strong>Arms crossed on chest</strong> for both standing & sitting during calibration and test.
             </div>
 
             <div class="btns">
-              <button id="btnSetA">Set A (Standing)</button>
-              <button id="btnSetB">Set B (Sitting)</button>
+              <button id="btnManualChair">Manual Reps</button>
             </div>
-
-            <div class="btns">
-              <button class="primary" id="btnStartChair" disabled>Start Chair Test</button>
-              <button id="btnManualChair">Enter reps manually</button>
-            </div>
-
-            <div class="small muted" id="chairCalibInfo">A: — | B: —</div>
           </div>
 
-          <!-- Balance -->
           <div id="balanceOptions" class="hidden" style="margin-top:10px">
             <label>Leg to Test</label>
             <select id="balanceLeg">
-              <option value="left">Left leg (stand on LEFT)</option>
-              <option value="right">Right leg (stand on RIGHT)</option>
+              <option value="left">Left leg first</option>
+              <option value="right">Right leg</option>
             </select>
 
-            <div class="hr"></div>
-            <div class="small muted">
-              Calibration:
-              <div>• <strong>Set A</strong> = Stable single-leg stance</div>
-              <div>• Timer starts when stable</div>
-              <div>• Stops when balance is lost</div>
+            <div class="notice small" style="margin-top:10px">
+              Balance: Calibrate A when stable on one leg. Start → timer will stop when balance is lost.
             </div>
 
             <div class="btns">
-              <button id="btnBalSetA">Set A (Stable stance)</button>
-              <button class="primary" id="btnStartBalance" disabled>Start Balance Test</button>
+              <button id="btnManualBalance">Manual Time</button>
             </div>
+          </div>
 
-            <div class="btns">
-              <button id="btnManualBalance">Enter time manually</button>
-            </div>
-
-            <div class="small muted" id="balCalibInfo">A: —</div>
+          <div class="hr"></div>
+          <div class="btns">
+            <button id="btnBack3">Back</button>
+            <button class="primary" id="btnFinish" disabled>Finish & View Results</button>
           </div>
         </div>
 
-        <h2>Progress</h2>
-        <div class="row">
-          <span class="pill"><strong>Chair:</strong> <span id="pChair">Not done</span></span>
-          <span class="pill"><strong>Balance L:</strong> <span id="pBalL">Not done</span></span>
-          <span class="pill"><strong>Balance R:</strong> <span id="pBalR">Not done</span></span>
+        <div class="card" style="margin:0; background: rgba(12,20,38,.55)">
+          <h2>Progress</h2>
+          <div class="row">
+            <span class="pill"><strong>Chair:</strong> <span id="pChair">Not done</span></span>
+            <span class="pill"><strong>Balance L:</strong> <span id="pBalL">Not done</span></span>
+            <span class="pill"><strong>Balance R:</strong> <span id="pBalR">Not done</span></span>
+          </div>
+
+          <div class="hr"></div>
+          <div class="notice small">
+            If camera cannot detect: improve lighting, ensure full body visible, stand nearer (1.5–2.5m), and keep background still.
+          </div>
         </div>
-
-        <div class="hr"></div>
-
-        <div class="btns">
-          <button id="btnFinish" class="primary" disabled>Finish & View Results</button>
-          <button id="btnBack3">Back</button>
-        </div>
-
-        <p class="small muted">Privacy: stored locally on your device only. No uploads.</p>
       </div>
-    </div>
+    </section>
+
   </section>
 
   <!-- Results -->
@@ -359,62 +429,58 @@
     <h1>Results Summary</h1>
     <div id="resultsBlock" class="card" style="margin:0; background: rgba(12,20,38,.55)"></div>
 
-    <div class="footerActions">
+    <div class="btns" style="justify-content:space-between">
       <div class="btns">
         <button id="btnExport">Export Results (JSON)</button>
         <button id="btnExportPdf">Export Results (PDF)</button>
         <button id="btnCopyContact" class="primary">Copy Coach Contact</button>
       </div>
-      <div class="btns">
-        <button id="btnRestart">Restart</button>
-      </div>
+      <button id="btnRestart">Restart</button>
     </div>
 
     <p class="small muted">
-      This assessment is for education and fitness screening only and does not diagnose medical conditions.
+      This is for education and screening only and does not diagnose medical conditions.
       If you have frequent falls or concerning symptoms, consult a healthcare professional.
     </p>
   </section>
 
 </main>
 
-<!-- TFJS + Pose Detection (MoveNet) -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
-
-<!-- PDF Export -->
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
 <script>
-/* =========================
-   Helpers + State
-========================= */
 const $ = (id)=>document.getElementById(id);
 const SCREENS = ["screenWelcome","screenRegister","screenGuide","screenTests","screenResults"];
 const show = (screenId)=> SCREENS.forEach(s => $(s).classList.toggle("hidden", s!==screenId));
 const now = ()=>performance.now();
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-
 function escapeHtml(s){
   return String(s??"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
 }
 
 const app = {
-  user:null, consent:false,
+  user:null,
+  detector:null,
+  stream:null,
+  camOn:false,
+  lastPose:null,
+  poseConf:0,
+  rafId:null,
+  stopFlag:false,
+  track:null,
+  zoomCap:null,
+  zoomVal:1,
   chair:{ protocolSec:30, yA:null, yB:null, reps:0, done:false, started:false, startTs:0, lastState:"unknown", lastSwitchTs:0 },
   balance:{
     left:{ yA:null, time:null, done:false },
     right:{ yA:null, time:null, done:false },
     runningLeg:null, started:false, stableStarted:false, startTs:0, stableTs:0, _x0:null, _a0:null
-  },
-  detector:null, camOn:false, lastPose:null, poseConf:0, rafId:null, stopFlag:false,
-  stream:null
+  }
 };
 
-/* =========================
-   Norms + Interpretation
-========================= */
 const chair30Norms = {
   "60-64": { men:14, women:12 },
   "65-69": { men:12, women:11 },
@@ -442,15 +508,12 @@ function chair1MinRef(age){
 }
 function interpretBalance(sec){
   if(sec==null) return {label:"—", cls:"muted"};
-  if(sec<5)  return {label:"< 5 seconds: associated with higher fall risk", cls:"bad"};
-  if(sec<10) return {label:"< 10 seconds: needs improvement", cls:"warn"};
-  if(sec>30) return {label:"> 30 seconds: generally lower fall risk", cls:"ok"};
-  return {label:"10–30 seconds: moderate", cls:"warn"};
+  if(sec<5)  return {label:"< 5s: higher fall risk", cls:"bad"};
+  if(sec<10) return {label:"< 10s: needs improvement", cls:"warn"};
+  if(sec>30) return {label:"> 30s: generally lower fall risk", cls:"ok"};
+  return {label:"10–30s: moderate", cls:"warn"};
 }
 
-/* =========================
-   Camera + Pose
-========================= */
 const video = $("video");
 const canvas = $("canvas");
 const ctx = canvas.getContext("2d");
@@ -460,10 +523,10 @@ async function stopStream(){
     for(const t of app.stream.getTracks()) t.stop();
     app.stream = null;
   }
-  if(video.srcObject){
-    video.srcObject = null;
-  }
+  app.track = null;
+  app.zoomCap = null;
   app.camOn = false;
+  video.srcObject = null;
 }
 
 async function loadModel(){
@@ -476,35 +539,30 @@ async function loadModel(){
   );
 }
 
-async function startCamera({testOnly=false} = {}){
+async function startCamera(){
+  app.stopFlag = true;
+  cancelAnimationFrame(app.rafId);
   await stopStream();
 
   const facing = $("cameraFacing").value || "environment";
 
-  // Prefer exact facingMode, but fall back if device/browser rejects it.
   let stream = null;
   try{
     stream = await navigator.mediaDevices.getUserMedia({
       audio:false,
       video:{
-        facingMode: { ideal: facing },   // "environment" (back) or "user" (front)
+        facingMode: { ideal: facing },
         width:{ideal:720},
         height:{ideal:1280}
       }
     });
   }catch(e1){
-    // fallback: plain facingMode string
     try{
       stream = await navigator.mediaDevices.getUserMedia({
         audio:false,
-        video:{
-          facingMode: facing,
-          width:{ideal:720},
-          height:{ideal:1280}
-        }
+        video:{ facingMode: facing, width:{ideal:720}, height:{ideal:1280} }
       });
     }catch(e2){
-      // last resort: no facingMode (browser chooses)
       stream = await navigator.mediaDevices.getUserMedia({ audio:false, video:true });
     }
   }
@@ -517,21 +575,111 @@ async function startCamera({testOnly=false} = {}){
   canvas.width = video.videoWidth || 720;
   canvas.height = video.videoHeight || 1280;
 
-  $("btnStopAll").disabled = false;
+  const tracks = stream.getVideoTracks();
+  app.track = tracks?.[0] || null;
+  setupZoomControls();
 
-  if(testOnly){
-    $("modelNote").textContent = `Camera preview started (${facing === "environment" ? "Back" : "Front"}). If full body fits easily, press Enable Camera.`;
+  $("hudSub").textContent = "Loading model…";
+  await loadModel();
+  $("hudSub").textContent = (facing==="environment") ? "Back cam ready" : "Front cam ready";
+
+  app.stopFlag = false;
+  loop();
+}
+
+function setupZoomControls(){
+  const slider = $("zoomSlider");
+  const label  = $("zoomLabel");
+  slider.value = "1";
+  label.textContent = "1.0×";
+  app.zoomVal = 1;
+
+  if(!app.track || !app.track.getCapabilities){
+    slider.min = "1"; slider.max = "1"; slider.step="0.1";
+    slider.disabled = true;
     return;
   }
 
-  $("modelNote").textContent = "Loading pose model…";
-  await loadModel();
-  $("modelNote").textContent = `Pose model ready (${facing === "environment" ? "Back" : "Front"}). Calibrate and start.`;
-  startLoop();
+  const caps = app.track.getCapabilities();
+  if(!caps || !caps.zoom){
+    slider.min = "1"; slider.max = "1"; slider.step="0.1";
+    slider.disabled = true;
+    return;
+  }
+
+  slider.disabled = false;
+  app.zoomCap = caps.zoom;
+
+  slider.min = String(caps.zoom.min);
+  slider.max = String(caps.zoom.max);
+  slider.step = String(caps.zoom.step || 0.1);
+
+  const z = caps.zoom.min;
+  slider.value = String(z);
+  label.textContent = (Math.round(z*10)/10).toFixed(1) + "×";
+  app.zoomVal = z;
+
+  applyZoom(z);
+
+  slider.oninput = ()=>{
+    const v = Number(slider.value);
+    app.zoomVal = v;
+    label.textContent = (Math.round(v*10)/10).toFixed(1) + "×";
+    applyZoom(v);
+  };
 }
 
-function kp(pose, name){ return pose?.keypoints?.find(k=>k.name===name) || null; }
+async function applyZoom(z){
+  if(!app.track) return;
+  try{
+    await app.track.applyConstraints({ advanced: [{ zoom: z }] });
+  }catch(e){}
+}
 
+/* Pinch zoom */
+const stage = $("stage");
+const pointers = new Map();
+let pinchStartDist = null;
+let pinchStartZoom = null;
+function dist(a,b){
+  const dx=a.clientX-b.clientX, dy=a.clientY-b.clientY;
+  return Math.hypot(dx,dy);
+}
+stage.addEventListener("pointerdown",(e)=>{
+  stage.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, e);
+  if(pointers.size===2 && app.zoomCap){
+    const [p1,p2] = [...pointers.values()];
+    pinchStartDist = dist(p1,p2);
+    pinchStartZoom = app.zoomVal;
+  }
+});
+stage.addEventListener("pointermove",(e)=>{
+  if(!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, e);
+  if(pointers.size===2 && app.zoomCap){
+    const [p1,p2] = [...pointers.values()];
+    const d = dist(p1,p2);
+    if(!pinchStartDist || !pinchStartZoom) return;
+    const scale = d / pinchStartDist;
+    let z = pinchStartZoom * scale;
+    z = clamp(z, app.zoomCap.min, app.zoomCap.max);
+    app.zoomVal = z;
+    $("zoomSlider").value = String(z);
+    $("zoomLabel").textContent = (Math.round(z*10)/10).toFixed(1) + "×";
+    applyZoom(z);
+  }
+});
+stage.addEventListener("pointerup",(e)=>{
+  pointers.delete(e.pointerId);
+  if(pointers.size<2){ pinchStartDist=null; pinchStartZoom=null; }
+});
+stage.addEventListener("pointercancel",(e)=>{
+  pointers.delete(e.pointerId);
+  if(pointers.size<2){ pinchStartDist=null; pinchStartZoom=null; }
+});
+
+function kp(pose, name){ return pose?.keypoints?.find(k=>k.name===name) || null; }
 function poseConfidence(pose){
   const names = ["left_hip","right_hip","left_shoulder","right_shoulder","left_ankle","right_ankle"];
   let s=0,n=0;
@@ -541,7 +689,6 @@ function poseConfidence(pose){
   }
   return n? s/n : 0;
 }
-
 function midY(pose){
   const lh=kp(pose,"left_hip"), rh=kp(pose,"right_hip");
   const ls=kp(pose,"left_shoulder"), rs=kp(pose,"right_shoulder");
@@ -563,7 +710,7 @@ function midX(pose){
 
 function drawPose(pose){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="rgba(0,0,0,.15)";
+  ctx.fillStyle="rgba(0,0,0,.10)";
   ctx.fillRect(0,0,canvas.width,canvas.height);
   if(!pose) return;
 
@@ -575,115 +722,93 @@ function drawPose(pose){
     ctx.fill();
   }
 
-  // Chair A/B
-  if(app.chair.yA!=null){
-    ctx.strokeStyle="rgba(74,222,128,.9)"; ctx.lineWidth=3;
-    ctx.beginPath(); ctx.moveTo(0,app.chair.yA); ctx.lineTo(canvas.width,app.chair.yA); ctx.stroke();
-    ctx.fillStyle="rgba(74,222,128,.9)"; ctx.fillText("A (Stand)",10,app.chair.yA-8);
-  }
-  if(app.chair.yB!=null){
-    ctx.strokeStyle="rgba(251,191,36,.9)"; ctx.lineWidth=3;
-    ctx.beginPath(); ctx.moveTo(0,app.chair.yB); ctx.lineTo(canvas.width,app.chair.yB); ctx.stroke();
-    ctx.fillStyle="rgba(251,191,36,.9)"; ctx.fillText("B (Sit)",10,app.chair.yB-8);
-  }
-
-  // Balance A
-  const leg = $("balanceLeg").value;
-  const balObj = (leg==="left") ? app.balance.left : app.balance.right;
-  if(balObj.yA!=null){
-    ctx.strokeStyle="rgba(147,197,253,.9)"; ctx.lineWidth=3;
-    ctx.beginPath(); ctx.moveTo(0,balObj.yA); ctx.lineTo(canvas.width,balObj.yA); ctx.stroke();
-    ctx.fillStyle="rgba(147,197,253,.9)"; ctx.fillText("A (Stable)",10,balObj.yA-8);
+  if($("testMode").value==="chair"){
+    if(app.chair.yA!=null){
+      ctx.strokeStyle="rgba(74,222,128,.95)"; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(0,app.chair.yA); ctx.lineTo(canvas.width,app.chair.yA); ctx.stroke();
+      ctx.fillStyle="rgba(74,222,128,.95)";
+      ctx.fillText("A (Stand, arms crossed)", 10, app.chair.yA-8);
+    }
+    if(app.chair.yB!=null){
+      ctx.strokeStyle="rgba(251,191,36,.95)"; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(0,app.chair.yB); ctx.lineTo(canvas.width,app.chair.yB); ctx.stroke();
+      ctx.fillStyle="rgba(251,191,36,.95)";
+      ctx.fillText("B (Sit, arms crossed)", 10, app.chair.yB-8);
+    }
+  } else {
+    const leg = $("balanceLeg").value;
+    const target = (leg==="left") ? app.balance.left : app.balance.right;
+    if(target.yA!=null){
+      ctx.strokeStyle="rgba(147,197,253,.95)"; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(0,target.yA); ctx.lineTo(canvas.width,target.yA); ctx.stroke();
+      ctx.fillStyle="rgba(147,197,253,.95)";
+      ctx.fillText("A (Stable)", 10, target.yA-8);
+    }
   }
 }
 
 async function loop(){
   if(app.stopFlag || !app.detector || !app.camOn) return;
 
-  const poses = await app.detector.estimatePoses(video, {maxPoses:1, flipHorizontal:true});
-  const pose = poses?.[0] || null;
+  let pose = null;
+  try{
+    const poses = await app.detector.estimatePoses(video, {maxPoses:1, flipHorizontal:true});
+    pose = poses?.[0] || null;
+  }catch(e){
+    pose = null;
+  }
+
   app.lastPose = pose;
   app.poseConf = poseConfidence(pose);
   $("kpiConf").textContent = app.poseConf ? app.poseConf.toFixed(2) : "—";
 
   drawPose(pose);
 
-  const mode = $("testMode").value;
-  if(mode==="chair") updateChair(pose);
+  if($("testMode").value==="chair") updateChair(pose);
   else updateBalance(pose);
 
   app.rafId = requestAnimationFrame(loop);
 }
 
-function startLoop(){
-  app.stopFlag=false;
-  cancelAnimationFrame(app.rafId);
-  loop();
-}
-
-async function stopAll(){
-  app.stopFlag=true;
-  $("kpiStatus").textContent="Stopped";
-  $("btnStopAll").disabled=true;
-
-  app.chair.started=false;
-  app.balance.started=false;
-
-  await stopStream();
-}
-
-/* =========================
-   Chair Stand Logic
-========================= */
 function zoneFromY(y,yA,yB){
   if(y==null||yA==null||yB==null) return "unknown";
-  const tol=Math.abs(yB-yA)*0.18;
+  const tol = Math.abs(yB-yA) * 0.22;
   const dA=Math.abs(y-yA), dB=Math.abs(y-yB);
   if(dA<=tol) return "stand";
   if(dB<=tol) return "sit";
-  return (dA<dB)?"stand":"sit";
+  return (dA<dB) ? "stand" : "sit";
 }
-
-function updateChair(pose){
-  if(!app.chair.started){
-    $("kpiStatus").textContent="Ready (Chair)";
-    $("kpiTimer").textContent="0.0s";
-    $("kpiReps").textContent=String(app.chair.reps);
-    return;
-  }
-  const elapsed=(now()-app.chair.startTs)/1000;
-  $("kpiTimer").textContent=elapsed.toFixed(1)+"s";
-  if(elapsed>=app.chair.protocolSec){ finishChair(); return; }
-
-  const y = pose?midY(pose):null;
-  if(app.poseConf<0.25 || y==null) return;
-
-  const state=zoneFromY(y,app.chair.yA,app.chair.yB);
-  const t=now(), minGap=350;
-  if(app.chair.lastState==="sit" && state==="stand" && (t-app.chair.lastSwitchTs)>minGap){
-    app.chair.reps++;
-    app.chair.lastSwitchTs=t;
-    $("kpiReps").textContent=String(app.chair.reps);
-  }
-  if(state!==app.chair.lastState) app.chair.lastState=state;
-  $("kpiStatus").textContent="Running (Chair)";
-}
-
-function canStartChair(){ return app.camOn && app.chair.yA!=null && app.chair.yB!=null; }
-
-function startChair(){
-  app.chair.protocolSec=Number($("chairProtocol").value);
-  app.chair.reps=0;
-  app.chair.started=true;
-  app.chair.done=false;
-  app.chair.startTs=now();
-  app.chair.lastState="unknown";
-  app.chair.lastSwitchTs=now();
+function resetChairRun(){
+  app.chair.reps = 0;
+  app.chair.started = false;
+  app.chair.done = false;
+  app.chair.startTs = 0;
+  app.chair.lastState = "unknown";
+  app.chair.lastSwitchTs = 0;
   $("kpiReps").textContent="0";
   $("kpiTimer").textContent="0.0s";
-  $("kpiStatus").textContent="Running (Chair)";
 }
-
+function canStartChair(){
+  return app.camOn && app.chair.yA!=null && app.chair.yB!=null;
+}
+function startChair(){
+  if(!canStartChair()){
+    alert("Please calibrate A (standing) and B (sitting) first.");
+    return;
+  }
+  if(app.chair.yA > app.chair.yB){
+    const tmp = app.chair.yA;
+    app.chair.yA = app.chair.yB;
+    app.chair.yB = tmp;
+  }
+  resetChairRun();
+  app.chair.protocolSec = Number($("chairProtocol").value);
+  app.chair.started = true;
+  app.chair.startTs = now();
+  app.chair.lastSwitchTs = now();
+  $("kpiStatus").textContent="Running (Chair)";
+  $("hudSub").textContent=`Chair ${app.chair.protocolSec}s`;
+}
 function finishChair(){
   app.chair.started=false;
   app.chair.done=true;
@@ -691,10 +816,29 @@ function finishChair(){
   $("pChair").textContent=`${app.chair.reps} reps (${app.chair.protocolSec}s)`;
   checkFinishReady();
 }
+function updateChair(pose){
+  $("hudMode").textContent="Chair";
+  $("kpiReps").textContent = String(app.chair.reps);
+  if(!app.chair.started){
+    $("kpiStatus").textContent="Ready (Chair)";
+    return;
+  }
+  const elapsed = (now()-app.chair.startTs)/1000;
+  $("kpiTimer").textContent = elapsed.toFixed(1)+"s";
+  if(elapsed>=app.chair.protocolSec){ finishChair(); return; }
+  const y = pose ? midY(pose) : null;
+  if(app.poseConf < 0.25 || y==null) return;
+  const state = zoneFromY(y, app.chair.yA, app.chair.yB);
+  const t = now();
+  const minGap = 450;
+  if(app.chair.lastState==="sit" && state==="stand" && (t-app.chair.lastSwitchTs)>minGap){
+    app.chair.reps++;
+    app.chair.lastSwitchTs=t;
+    $("kpiReps").textContent = String(app.chair.reps);
+  }
+  if(state!=="unknown") app.chair.lastState = state;
+}
 
-/* =========================
-   Balance Logic
-========================= */
 function liftedFootOk(pose, stanceLeg){
   const support = kp(pose, stanceLeg==="left" ? "left_ankle" : "right_ankle");
   const lift    = kp(pose, stanceLeg==="left" ? "right_ankle" : "left_ankle");
@@ -702,84 +846,46 @@ function liftedFootOk(pose, stanceLeg){
   if((support.score??0)<0.2||(lift.score??0)<0.2) return false;
   return (support.y - lift.y) > (canvas.height*0.03);
 }
-
 function balanceLost(pose, stanceLeg, yA){
   if(!pose||yA==null) return true;
   if(!liftedFootOk(pose, stanceLeg)) return true;
-
   const y=midY(pose), x=midX(pose);
-  const tolY=canvas.height*0.035, tolX=canvas.width*0.06;
+  const tolY=canvas.height*0.04, tolX=canvas.width*0.07;
   if(y==null || Math.abs(y-yA)>tolY) return true;
-
   if(app.balance._x0==null && x!=null) app.balance._x0=x;
   if(x!=null && app.balance._x0!=null && Math.abs(x-app.balance._x0)>tolX) return true;
-
   const support = kp(pose, stanceLeg==="left" ? "left_ankle" : "right_ankle");
   if(support && (support.score??0)>0.2){
     if(app.balance._a0==null) app.balance._a0={x:support.x,y:support.y};
     const dx=Math.abs(support.x-app.balance._a0.x);
     const dy=Math.abs(support.y-app.balance._a0.y);
-    if(dx>canvas.width*0.08 || dy>canvas.height*0.06) return true;
+    if(dx>canvas.width*0.09 || dy>canvas.height*0.07) return true;
   }
   return false;
 }
-
-function updateBalance(pose){
-  if(!app.balance.started){
-    $("kpiStatus").textContent="Ready (Balance)";
-    $("kpiTimer").textContent="0.0s";
-    return;
-  }
-  const leg=app.balance.runningLeg;
-  const target=(leg==="left")?app.balance.left:app.balance.right;
-  const t=now();
-
-  if(!app.balance.stableStarted){
-    $("kpiStatus").textContent="Stabilising…";
-    const y=pose?midY(pose):null;
-    const confOk=app.poseConf>=0.25;
-    if(confOk && y!=null && target.yA!=null){
-      const close=Math.abs(y-target.yA) <= canvas.height*0.02;
-      const okLift=liftedFootOk(pose, leg);
-      if(close && okLift){
-        if(!app.balance.stableTs) app.balance.stableTs=t;
-        if((t-app.balance.stableTs)>=450){
-          app.balance.stableStarted=true;
-          app.balance.startTs=t;
-        }
-      } else app.balance.stableTs=0;
-    }
-    $("kpiTimer").textContent="0.0s";
-    return;
-  }
-
-  const elapsed=(t-app.balance.startTs)/1000;
-  $("kpiTimer").textContent=elapsed.toFixed(1)+"s";
-  $("kpiStatus").textContent=`Running (Balance: ${leg.toUpperCase()})`;
-
-  const lost = (app.poseConf<0.25) || balanceLost(pose, leg, target.yA);
-  if(lost) finishBalance(elapsed);
-}
-
 function canStartBalance(){
-  const leg=$("balanceLeg").value;
-  const target=(leg==="left")?app.balance.left:app.balance.right;
+  const leg = $("balanceLeg").value;
+  const target = (leg==="left") ? app.balance.left : app.balance.right;
   return app.camOn && target.yA!=null;
 }
-
 function startBalance(){
-  const leg=$("balanceLeg").value;
-  app.balance.runningLeg=leg;
-  app.balance.started=true;
-  app.balance.stableStarted=false;
-  app.balance.stableTs=0;
-  app.balance.startTs=0;
+  if(!canStartBalance()){
+    alert("Please calibrate A (stable stance) first for this leg.");
+    return;
+  }
+  const leg = $("balanceLeg").value;
+  app.balance.runningLeg = leg;
+  app.balance.started = true;
+  app.balance.stableStarted = false;
+  app.balance.stableTs = 0;
+  app.balance.startTs = 0;
   app.balance._x0=null;
   app.balance._a0=null;
-  $("kpiTimer").textContent="0.0s";
-  $("kpiStatus").textContent="Stabilising…";
+  $("kpiReps").textContent = "—";
+  $("kpiTimer").textContent = "0.0s";
+  $("kpiStatus").textContent = "Stabilising…";
+  $("hudSub").textContent = `Balance ${leg.toUpperCase()}`;
 }
-
 function finishBalance(seconds){
   app.balance.started=false;
   const leg=app.balance.runningLeg;
@@ -791,10 +897,132 @@ function finishBalance(seconds){
   else $("pBalR").textContent=`${target.time.toFixed(1)}s`;
   checkFinishReady();
 }
+function updateBalance(pose){
+  $("hudMode").textContent="Balance";
+  $("kpiReps").textContent="—";
+  if(!app.balance.started){
+    $("kpiStatus").textContent="Ready (Balance)";
+    return;
+  }
+  const leg = app.balance.runningLeg;
+  const target = (leg==="left") ? app.balance.left : app.balance.right;
+  const t = now();
+  if(!app.balance.stableStarted){
+    const y = pose ? midY(pose) : null;
+    const confOk = app.poseConf >= 0.25;
+    $("kpiStatus").textContent="Stabilising…";
+    $("kpiTimer").textContent="0.0s";
+    if(confOk && y!=null && target.yA!=null){
+      const close = Math.abs(y-target.yA) <= canvas.height*0.025;
+      const okLift = liftedFootOk(pose, leg);
+      if(close && okLift){
+        if(!app.balance.stableTs) app.balance.stableTs=t;
+        if((t-app.balance.stableTs)>=500){
+          app.balance.stableStarted=true;
+          app.balance.startTs=t;
+          $("kpiStatus").textContent=`Running (Balance ${leg.toUpperCase()})`;
+        }
+      } else app.balance.stableTs=0;
+    }
+    return;
+  }
+  const elapsed = (t-app.balance.startTs)/1000;
+  $("kpiTimer").textContent = elapsed.toFixed(1)+"s";
+  $("kpiStatus").textContent = `Running (Balance ${leg.toUpperCase()})`;
+  const lost = (app.poseConf<0.25) || balanceLost(pose, leg, target.yA);
+  if(lost) finishBalance(elapsed);
+}
 
-/* =========================
-   Results + Storage
-========================= */
+function updateCalibInfo(){
+  if($("testMode").value==="chair"){
+    $("calibInfo").textContent = `A: ${app.chair.yA!=null?Math.round(app.chair.yA):"—"} | B: ${app.chair.yB!=null?Math.round(app.chair.yB):"—"}`;
+  } else {
+    const leg=$("balanceLeg").value;
+    const target=(leg==="left")?app.balance.left:app.balance.right;
+    $("calibInfo").textContent = `A: ${target.yA!=null?Math.round(target.yA):"—"} | B: —`;
+  }
+}
+
+$("btnCalA").onclick=()=>{
+  if(!app.lastPose){ alert("No pose detected yet. Ensure the person is fully visible and wait 1–2 seconds."); return; }
+  const y = midY(app.lastPose);
+  if(y==null){ alert("Cannot detect body position. Improve lighting / full body in frame."); return; }
+  if($("testMode").value==="chair"){
+    app.chair.yA = y;
+    $("hudSub").textContent = "A saved (Standing)";
+  } else {
+    const leg=$("balanceLeg").value;
+    const target=(leg==="left")?app.balance.left:app.balance.right;
+    target.yA = y;
+    $("hudSub").textContent = `A saved (Balance ${leg.toUpperCase()})`;
+  }
+  updateCalibInfo();
+};
+$("btnCalB").onclick=()=>{
+  if($("testMode").value!=="chair"){
+    alert("Balance test uses only Position A calibration.");
+    return;
+  }
+  if(!app.lastPose){ alert("No pose detected yet. Ensure the person is fully visible and wait 1–2 seconds."); return; }
+  const y = midY(app.lastPose);
+  if(y==null){ alert("Cannot detect body position. Improve lighting / full body in frame."); return; }
+  app.chair.yB = y;
+  $("hudSub").textContent = "B saved (Sitting)";
+  updateCalibInfo();
+};
+$("btnStartTest").onclick=()=>{
+  if($("testMode").value==="chair") startChair();
+  else startBalance();
+};
+$("btnStopTest").onclick=()=>{
+  app.chair.started=false;
+  app.balance.started=false;
+  $("kpiStatus").textContent="Stopped";
+  $("hudSub").textContent="Ready";
+};
+$("btnRestartCam").onclick=async()=>{
+  try{ await startCamera(); updateCalibInfo(); }
+  catch(e){ console.error(e); alert("Camera restart failed. Refresh and try again."); }
+};
+
+$("testMode").onchange=()=>{
+  const mode = $("testMode").value;
+  $("chairOptions").classList.toggle("hidden", mode!=="chair");
+  $("balanceOptions").classList.toggle("hidden", mode!=="balance");
+  $("btnCalB").disabled = (mode!=="chair");
+  $("hudSub").textContent = (mode==="chair") ? "Chair ready" : "Balance ready";
+  $("kpiReps").textContent = (mode==="chair") ? String(app.chair.reps) : "—";
+  updateCalibInfo();
+};
+$("balanceLeg").onchange=()=>updateCalibInfo();
+
+$("btnManualChair").onclick=()=>{
+  const sec = Number($("chairProtocol").value);
+  const reps = prompt(`Enter chair stand reps completed in ${sec} seconds:`);
+  if(reps==null) return;
+  const n = Number(reps);
+  if(!Number.isFinite(n) || n<0){ alert("Invalid number."); return; }
+  app.chair.protocolSec = sec;
+  app.chair.reps = Math.round(n);
+  app.chair.done = true;
+  app.chair.started = false;
+  $("pChair").textContent = `${app.chair.reps} reps (${sec}s)`;
+  checkFinishReady();
+};
+$("btnManualBalance").onclick=()=>{
+  const leg=$("balanceLeg").value;
+  const sec=prompt(`Enter single-leg balance time for ${leg.toUpperCase()} leg (seconds):`);
+  if(sec==null) return;
+  const n=Number(sec);
+  if(!Number.isFinite(n) || n<0){ alert("Invalid number."); return; }
+  const target=(leg==="left")?app.balance.left:app.balance.right;
+  target.time = clamp(n,0,120);
+  target.done = true;
+  if(leg==="left") $("pBalL").textContent = `${target.time.toFixed(1)}s`;
+  else $("pBalR").textContent = `${target.time.toFixed(1)}s`;
+  checkFinishReady();
+};
+
 function chairInterpretation(){
   const u=app.user, reps=app.chair.reps, sec=app.chair.protocolSec;
   if(sec===30){
@@ -802,7 +1030,7 @@ function chairInterpretation(){
     const norm=band?chair30Norms[band][u.gender]:null;
     if(!band||norm==null){
       return { title:"30s Chair Stand", ref:"Reference not available for this age band.", verdict:`${reps} reps`, cls:"muted",
-        detail:"Use your result as a personal baseline and track improvement over time." };
+        detail:"Use your result as a baseline and track improvement over time." };
     }
     const ok=reps>=norm;
     return {
@@ -810,7 +1038,7 @@ function chairInterpretation(){
       ref:`Reference (Age ${band}, ${u.gender==="men"?"Men":"Women"}): ${norm} reps`,
       verdict:`${reps} reps — ${ok?"Meets or above reference":"Below reference"}`,
       cls: ok ? "ok" : "warn",
-      detail:"Strength and endurance can improve with safe training (sit-to-stand practice, squats-to-chair, step-ups, resistance training)."
+      detail:"Strength can improve with safe training (sit-to-stand practice, step-ups, resistance training)."
     };
   } else {
     const ref=chair1MinRef(u.age);
@@ -834,20 +1062,15 @@ function buildResultsHTML(){
   return `
     <div class="badge">Participant: <strong>${escapeHtml(u.name)}</strong> • Age: <strong>${u.age}</strong> • Gender: <strong>${u.gender==="men"?"Male":"Female"}</strong></div>
     <div class="badge">HP: <strong>${escapeHtml(u.phone)}</strong></div>
-
     <div class="hr"></div>
-
     <h2>${chair.title}</h2>
     <p class="small muted">${chair.ref}</p>
-    <p class="${chair.cls}" style="font-weight:800">${chair.verdict}</p>
+    <p class="${chair.cls}" style="font-weight:900">${chair.verdict}</p>
     <p class="small">${chair.detail}</p>
-
     <div class="hr"></div>
-
     <h2>Single-Leg Balance</h2>
     <p><strong>Left:</strong> ${app.balance.left.time!=null ? app.balance.left.time.toFixed(1)+"s" : "—"} <span class="${balL.cls} small">(${balL.label})</span></p>
     <p><strong>Right:</strong> ${app.balance.right.time!=null ? app.balance.right.time.toFixed(1)+"s" : "—"} <span class="${balR.cls} small">(${balR.label})</span></p>
-
     <div class="notice small" style="margin-top:10px">
       <strong>Encouragement:</strong> Strength and balance can improve at any age with consistent, safe training.
       If you want a personalised plan, contact Coach Daniel.
@@ -859,40 +1082,31 @@ function saveLocal(){
   const payload={
     savedAt:new Date().toISOString(),
     user:app.user,
-    chair:{ protocolSec:app.chair.protocolSec, reps:app.chair.reps },
+    chair:{ protocolSec:app.chair.protocolSec, reps:app.chair.reps, yA:app.chair.yA, yB:app.chair.yB },
     balance:{ left:app.balance.left.time, right:app.balance.right.time }
   };
   localStorage.setItem("coachDanielSPPB_last", JSON.stringify(payload));
   return payload;
 }
-
 function loadLocal(){
   const raw=localStorage.getItem("coachDanielSPPB_last");
   if(!raw) return null;
   try{ return JSON.parse(raw); }catch(e){ return null; }
 }
-
 function checkFinishReady(){
   $("btnFinish").disabled = !(app.chair.done && app.balance.left.done && app.balance.right.done);
 }
 
-/* =========================
-   PDF Export
-========================= */
 function exportPdf(){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit:"pt", format:"a4" });
-
   const u=app.user || {name:"",age:"",gender:"",phone:""};
   const genderLabel = u.gender==="men" ? "Male" : (u.gender==="women" ? "Female" : "");
-
   const chair=chairInterpretation();
   const balL=interpretBalance(app.balance.left.time);
   const balR=interpretBalance(app.balance.right.time);
-
   const margin=48;
   let y=56;
-
   const addText=(text,size=12,bold=false)=>{
     doc.setFont("helvetica", bold ? "bold" : "normal");
     doc.setFontSize(size);
@@ -906,45 +1120,35 @@ function exportPdf(){
     doc.line(margin, y, 595 - margin, y);
     y += 14;
   };
-
   addText("Senior Physical Performance Battery Test", 18, true);
   addText("Welcome to Coach Daniel SPPB Test", 12, false);
   hr();
-
   addText(`Participant: ${u.name}`, 12, true);
   addText(`Age: ${u.age}   Gender: ${genderLabel}`, 12, false);
   addText(`HP: ${u.phone}`, 12, false);
   addText(`Date: ${new Date().toLocaleString()}`, 11, false);
   hr();
-
   addText(chair.title, 14, true);
   addText(`Result: ${app.chair.reps} reps (${app.chair.protocolSec}s)`, 12, false);
   addText(`Reference: ${chair.ref}`, 11, false);
   addText(`Interpretation: ${chair.verdict}`, 11, true);
   addText(`Notes: ${chair.detail}`, 11, false);
   hr();
-
   addText("Single-Leg Balance", 14, true);
   addText(`Left:  ${app.balance.left.time!=null ? app.balance.left.time.toFixed(1)+"s" : "—"}  (${balL.label})`, 11, false);
   addText(`Right: ${app.balance.right.time!=null ? app.balance.right.time.toFixed(1)+"s" : "—"}  (${balR.label})`, 11, false);
   hr();
-
   addText("Important Safety & Disclaimer", 12, true);
   addText("This assessment is for fitness screening and education only. It is not a medical diagnosis.", 10, false);
   addText("Stop immediately if you feel dizzy, chest pain, severe breathlessness, sharp joint pain, or unsafe.", 10, false);
   addText("If you have frequent falls or concerning symptoms, consult a healthcare professional.", 10, false);
   hr();
-
   addText("Contact", 12, true);
   addText("Coach Daniel Phua • HP: 98163603", 12, false);
-
   const safeName=(u.name||"Participant").replace(/[^\w\-]+/g,"_");
   doc.save(`CoachDaniel_SPPB_${safeName}_${Date.now()}.pdf`);
 }
 
-/* =========================
-   UI Events
-========================= */
 $("btnStart").onclick=()=>show("screenRegister");
 $("btnBack1").onclick=()=>show("screenWelcome");
 $("btnBack2").onclick=()=>show("screenRegister");
@@ -967,110 +1171,19 @@ $("btnContinue1").onclick=()=>{
   const phone=$("fPhone").value.trim();
   if(!name || !age || !gender || !phone){ alert("Please complete name, age, gender, and HP no."); return; }
   if(!($("cAgree1").checked && $("cAgree2").checked && $("cAgree3").checked)){ alert("Please tick all consent checkboxes to proceed."); return; }
-  app.user={name,age,gender,phone}; app.consent=true;
+  app.user={name,age,gender,phone};
   show("screenGuide");
 };
 
-$("btnContinue2").onclick=()=>show("screenTests");
-
-/** NEW: Test camera view (no model load) */
-$("btnTestCamera").onclick=async()=>{
+$("btnContinue2").onclick=async()=>{
+  show("screenTests");
   try{
-    await startCamera({testOnly:true});
+    await startCamera();
+    updateCalibInfo();
   }catch(e){
     console.error(e);
-    alert("Camera preview failed. Check permissions and try again.");
+    alert("Camera could not be started. Please allow camera permissions and try again.");
   }
-};
-
-/** Enable camera + load model */
-$("btnInitCamera").onclick=async()=>{
-  try{
-    await startCamera({testOnly:false});
-    $("btnInitCamera").disabled=true;
-    $("btnStartChair").disabled=!canStartChair();
-    $("btnStartBalance").disabled=!canStartBalance();
-  }catch(e){
-    console.error(e);
-    alert("Camera could not be started. Check permissions and try again.");
-  }
-};
-
-$("btnStopAll").onclick=async()=>{ await stopAll(); };
-
-$("testMode").onchange=()=>{
-  const mode=$("testMode").value;
-  $("chairOptions").classList.toggle("hidden", mode!=="chair");
-  $("balanceOptions").classList.toggle("hidden", mode!=="balance");
-};
-
-$("btnSetA").onclick=()=>{
-  if(!app.lastPose){ alert("No pose detected yet. Press Enable Camera and wait for model."); return; }
-  const y=midY(app.lastPose);
-  if(y==null){ alert("Cannot read position. Improve lighting / keep full body in frame."); return; }
-  app.chair.yA=y;
-  $("chairCalibInfo").textContent=`A: ${Math.round(y)} | B: ${app.chair.yB!=null?Math.round(app.chair.yB):"—"}`;
-  $("btnStartChair").disabled=!canStartChair();
-};
-$("btnSetB").onclick=()=>{
-  if(!app.lastPose){ alert("No pose detected yet. Press Enable Camera and wait for model."); return; }
-  const y=midY(app.lastPose);
-  if(y==null){ alert("Cannot read position. Improve lighting / keep full body in frame."); return; }
-  app.chair.yB=y;
-  $("chairCalibInfo").textContent=`A: ${app.chair.yA!=null?Math.round(app.chair.yA):"—"} | B: ${Math.round(y)}`;
-  $("btnStartChair").disabled=!canStartChair();
-};
-$("btnStartChair").onclick=()=>{
-  if(!canStartChair()){ alert("Enable camera + set A & B first."); return; }
-  startChair();
-};
-$("btnManualChair").onclick=()=>{
-  const sec=Number($("chairProtocol").value);
-  const reps=prompt(`Enter chair stand reps completed in ${sec} seconds:`);
-  if(reps==null) return;
-  const n=Number(reps);
-  if(!Number.isFinite(n) || n<0){ alert("Invalid number."); return; }
-  app.chair.protocolSec=sec; app.chair.reps=Math.round(n);
-  app.chair.done=true; app.chair.started=false;
-  $("pChair").textContent=`${app.chair.reps} reps (${sec}s)`;
-  checkFinishReady();
-};
-
-$("btnBalSetA").onclick=()=>{
-  const leg=$("balanceLeg").value;
-  if(!app.lastPose){ alert("No pose detected yet. Press Enable Camera and wait for model."); return; }
-  const y=midY(app.lastPose);
-  if(y==null){ alert("Cannot read stable stance. Improve lighting / full body in frame."); return; }
-  if(!liftedFootOk(app.lastPose, leg)){
-    const ok=confirm("Lifted foot may not be clearly off the ground. Set A anyway?");
-    if(!ok) return;
-  }
-  const target=(leg==="left")?app.balance.left:app.balance.right;
-  target.yA=y;
-  $("balCalibInfo").textContent=`A: ${Math.round(y)}`;
-  $("btnStartBalance").disabled=!canStartBalance();
-};
-$("balanceLeg").onchange=()=>{
-  const leg=$("balanceLeg").value;
-  const target=(leg==="left")?app.balance.left:app.balance.right;
-  $("balCalibInfo").textContent=`A: ${target.yA!=null?Math.round(target.yA):"—"}`;
-  $("btnStartBalance").disabled=!canStartBalance();
-};
-$("btnStartBalance").onclick=()=>{
-  if(!canStartBalance()){ alert("Enable camera + set A for selected leg first."); return; }
-  startBalance();
-};
-$("btnManualBalance").onclick=()=>{
-  const leg=$("balanceLeg").value;
-  const sec=prompt(`Enter single-leg balance time for ${leg.toUpperCase()} leg (seconds):`);
-  if(sec==null) return;
-  const n=Number(sec);
-  if(!Number.isFinite(n) || n<0){ alert("Invalid number."); return; }
-  const target=(leg==="left")?app.balance.left:app.balance.right;
-  target.time=clamp(n,0,120); target.done=true;
-  if(leg==="left") $("pBalL").textContent=`${target.time.toFixed(1)}s`;
-  else $("pBalR").textContent=`${target.time.toFixed(1)}s`;
-  checkFinishReady();
 };
 
 $("btnFinish").onclick=()=>{
@@ -1078,7 +1191,6 @@ $("btnFinish").onclick=()=>{
   show("screenResults");
   $("resultsBlock").innerHTML=buildResultsHTML();
 };
-
 $("btnExport").onclick=()=>{
   const payload=saveLocal();
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -1087,18 +1199,15 @@ $("btnExport").onclick=()=>{
   a.href=url; a.download="CoachDaniel_SPPB_Result.json"; a.click();
   URL.revokeObjectURL(url);
 };
-
 $("btnExportPdf").onclick=()=>{
   try{ saveLocal(); exportPdf(); }
   catch(e){ console.error(e); alert("PDF export failed. Try JSON export."); }
 };
-
 $("btnCopyContact").onclick=async()=>{
   const text="Coach Daniel Phua\nHP: 98163603";
   try{ await navigator.clipboard.writeText(text); alert("Coach contact copied."); }
   catch(e){ prompt("Copy this contact:", text); }
 };
-
 $("btnRestart").onclick=()=>location.reload();
 
 show("screenWelcome");
