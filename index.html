@@ -3,32 +3,73 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Coach Daniel – SPPB Chair + Balance</title>
+<title>Coach Daniel – SPPB</title>
 
 <style>
-html,body{margin:0;padding:0;background:#000;color:#fff;font-family:system-ui}
-#stage{position:relative;width:100vw;height:100vh;overflow:hidden}
-video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
-canvas{pointer-events:none}
-
-#stats{
-  position:absolute;top:10px;left:10px;
-  background:rgba(0,0,0,.55);
-  padding:10px 12px;border-radius:12px;font-size:14px
+html,body{
+  margin:0; padding:0;
+  background:#000; color:#fff;
+  font-family:system-ui,-apple-system;
+  overflow:hidden;
 }
 
-#hud{
-  position:absolute;bottom:10px;left:0;right:0;
-  display:flex;justify-content:center;gap:8px;flex-wrap:wrap
+#stage{
+  position:fixed;
+  inset:0;
+  background:#000;
+}
+
+video,canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+
+canvas{ pointer-events:none; }
+
+/* Status HUD */
+#statusBox{
+  position:absolute;
+  top:12px; left:12px;
+  background:rgba(0,0,0,.55);
+  padding:10px 12px;
+  border-radius:12px;
+  font-size:14px;
+}
+
+/* Top-right mode */
+#modeBox{
+  position:absolute;
+  top:12px; right:12px;
+}
+
+/* Bottom controls */
+#calBox{
+  position:absolute;
+  bottom:12px; left:12px;
+  display:flex; gap:8px;
+}
+#actionBox{
+  position:absolute;
+  bottom:12px; right:12px;
+  display:flex; gap:8px;
 }
 
 button,select{
-  padding:10px 14px;font-size:14px;border-radius:12px;border:none;font-weight:800
+  padding:12px 14px;
+  border-radius:14px;
+  border:none;
+  font-size:14px;
+  font-weight:800;
 }
-.green{background:#22c55e;color:#000}
-.blue{background:#3b82f6}
-.orange{background:#f59e0b}
-.red{background:#991b1b}
+
+.green{ background:#22c55e; color:#000 }
+.blue{ background:#3b82f6 }
+.orange{ background:#f59e0b }
+.red{ background:#991b1b }
+.dark{ background:rgba(0,0,0,.6); color:#fff }
 </style>
 </head>
 
@@ -38,34 +79,31 @@ button,select{
   <video id="video" autoplay playsinline muted></video>
   <canvas id="canvas"></canvas>
 
-  <div id="stats">
-    Mode: <span id="mode">Chair</span><br>
+  <!-- Status -->
+  <div id="statusBox">
+    Mode: <span id="modeLabel">Chair</span><br>
     ⏱ <span id="timer">0.0</span>s<br>
     🔢 Reps: <span id="reps">0</span><br>
     Status: <span id="status">Ready</span>
   </div>
 
-  <div id="hud">
-    <button id="startCam" class="green">Start Camera</button>
-
-    <select id="testMode">
-      <option value="chair">Chair Stand</option>
+  <!-- Mode selector -->
+  <div id="modeBox">
+    <select id="testMode" class="dark">
+      <option value="chair">Chair</option>
       <option value="balance">Balance</option>
     </select>
+  </div>
 
-    <select id="balanceLeg" style="display:none">
-      <option value="left">Left Leg</option>
-      <option value="right">Right Leg</option>
-    </select>
+  <!-- Calibration -->
+  <div id="calBox">
+    <button id="calA" class="blue">A</button>
+    <button id="calB" class="orange">B</button>
+  </div>
 
-    <button id="calA" class="blue">Calibrate A</button>
-    <button id="calB" class="orange">Calibrate B</button>
-
-    <select id="duration">
-      <option value="30">30s</option>
-      <option value="60">1 min</option>
-    </select>
-
+  <!-- Actions -->
+  <div id="actionBox">
+    <button id="startCam" class="green">Camera</button>
     <button id="startTest" class="green">Start</button>
     <button id="stopTest" class="red">Stop</button>
   </div>
@@ -83,23 +121,21 @@ const ctx=c.getContext("2d");
 let detector,running=false,lastPose=null;
 let yA=null,yB=null;
 let reps=0,lastState="unknown";
-let testing=false,startTime=0,duration=30,lastSwitch=0;
-let balLeg="left",balStartY=null,balStartX=null;
+let testing=false,startTime=0,lastSwitch=0;
+let balBaseY=null,balBaseX=null;
 
-// ---- helpers ----
 const kp=(p,n)=>p.keypoints.find(k=>k.name===n);
-const midHipY=p=>{
-  const lh=kp(p,"left_hip"),rh=kp(p,"right_hip");
+const midY=p=>{
+  const lh=kp(p,"left_hip"), rh=kp(p,"right_hip");
   if(!lh||!rh||lh.score<0.3||rh.score<0.3) return null;
   return (lh.y+rh.y)/2;
 };
-const midHipX=p=>{
-  const lh=kp(p,"left_hip"),rh=kp(p,"right_hip");
+const midX=p=>{
+  const lh=kp(p,"left_hip"), rh=kp(p,"right_hip");
   if(!lh||!rh||lh.score<0.3||rh.score<0.3) return null;
   return (lh.x+rh.x)/2;
 };
 
-// ---- camera ----
 async function startCamera(){
   const s=await navigator.mediaDevices.getUserMedia({
     video:{facingMode:"environment",width:{ideal:720},height:{ideal:1280}},
@@ -116,7 +152,6 @@ async function startCamera(){
   running=true; loop();
 }
 
-// ---- main loop ----
 async function loop(){
   if(!running) return;
   ctx.drawImage(v,0,0,c.width,c.height);
@@ -126,95 +161,82 @@ async function loop(){
   if(p){
     for(const k of p.keypoints){
       if(k.score>0.3){
-        ctx.beginPath();ctx.arc(k.x,k.y,6,0,Math.PI*2);
-        ctx.fillStyle="#22c55e";ctx.fill();
+        ctx.beginPath();
+        ctx.arc(k.x,k.y,6,0,Math.PI*2);
+        ctx.fillStyle="#22c55e";
+        ctx.fill();
       }
     }
   }
 
   if(testing && p){
-    if(document.getElementById("testMode").value==="chair") chairLogic(p);
+    if(testMode.value==="chair") chairLogic(p);
     else balanceLogic(p);
   }
 
   requestAnimationFrame(loop);
 }
 
-// ---- chair logic ----
-function zone(y){
-  const tol=Math.abs(yB-yA)*0.25;
-  if(Math.abs(y-yA)<tol) return "stand";
-  if(Math.abs(y-yB)<tol) return "sit";
-  return lastState;
-}
 function chairLogic(p){
-  const y=midHipY(p); if(y==null) return;
-  const z=zone(y), now=performance.now();
-  if(lastState==="sit" && z==="stand" && now-lastSwitch>500){
-    reps++; lastSwitch=now;
-    document.getElementById("reps").textContent=reps;
-  }
-  lastState=z;
-  updateTimer(now);
-}
+  const y=midY(p); if(y==null) return;
+  const tol=Math.abs(yB-yA)*0.25;
+  let state=lastState;
+  if(Math.abs(y-yA)<tol) state="stand";
+  if(Math.abs(y-yB)<tol) state="sit";
 
-// ---- balance logic ----
-function balanceLogic(p){
-  const y=midHipY(p), x=midHipX(p);
   const now=performance.now();
-  if(balStartY===null){
-    balStartY=y; balStartX=x; startTime=now;
+  if(lastState==="sit" && state==="stand" && now-lastSwitch>500){
+    reps++; lastSwitch=now;
+    repsEl.textContent=reps;
   }
-  const driftY=Math.abs(y-balStartY);
-  const driftX=Math.abs(x-balStartX);
-  if(driftY>c.height*0.05 || driftX>c.width*0.08){
-    stopTest();
-    return;
-  }
-  updateTimer(now);
+  lastState=state;
+  timerEl.textContent=((now-startTime)/1000).toFixed(1);
 }
 
-// ---- timer ----
-function updateTimer(now){
-  const t=(now-startTime)/1000;
-  document.getElementById("timer").textContent=t.toFixed(1);
+function balanceLogic(p){
+  const y=midY(p), x=midX(p);
+  if(balBaseY===null){ balBaseY=y; balBaseX=x; startTime=performance.now(); }
+  const dy=Math.abs(y-balBaseY);
+  const dx=Math.abs(x-balBaseX);
+  timerEl.textContent=((performance.now()-startTime)/1000).toFixed(1);
+  if(dy>c.height*0.05 || dx>c.width*0.08) stopTest();
 }
-
-// ---- controls ----
-document.getElementById("startCam").onclick=startCamera;
-
-document.getElementById("testMode").onchange=e=>{
-  const m=e.target.value;
-  document.getElementById("mode").textContent=m;
-  document.getElementById("balanceLeg").style.display=(m==="balance")?"inline":"none";
-};
-
-document.getElementById("balanceLeg").onchange=e=>balLeg=e.target.value;
-
-document.getElementById("calA").onclick=()=>{
-  if(!lastPose) return alert("No pose");
-  yA=midHipY(lastPose); balStartY=null;
-};
-document.getElementById("calB").onclick=()=>{
-  if(!lastPose) return alert("No pose");
-  yB=midHipY(lastPose);
-};
-
-document.getElementById("startTest").onclick=()=>{
-  testing=true; reps=0;
-  lastState="unknown"; balStartY=null;
-  startTime=performance.now();
-  duration=Number(document.getElementById("duration").value);
-  document.getElementById("status").textContent="Running";
-  document.getElementById("reps").textContent=0;
-};
-
-document.getElementById("stopTest").onclick=stopTest;
 
 function stopTest(){
   testing=false;
-  document.getElementById("status").textContent="Completed";
+  statusEl.textContent="Completed";
 }
+
+const testMode=document.getElementById("testMode");
+const modeLabel=document.getElementById("modeLabel");
+const timerEl=document.getElementById("timer");
+const repsEl=document.getElementById("reps");
+const statusEl=document.getElementById("status");
+
+testMode.onchange=()=>modeLabel.textContent=testMode.value;
+
+document.getElementById("startCam").onclick=startCamera;
+
+document.getElementById("calA").onclick=()=>{
+  if(!lastPose) return alert("No pose");
+  yA=midY(lastPose); balBaseY=null;
+};
+document.getElementById("calB").onclick=()=>{
+  if(!lastPose) return alert("No pose");
+  yB=midY(lastPose);
+};
+
+document.getElementById("startTest").onclick=()=>{
+  if(testMode.value==="chair" && (yA==null||yB==null))
+    return alert("Calibrate A & B first");
+  testing=true;
+  reps=0; repsEl.textContent=0;
+  lastState="unknown"; balBaseY=null;
+  startTime=performance.now();
+  statusEl.textContent="Running";
+};
+
+document.getElementById("stopTest").onclick=stopTest;
 </script>
 
 </body>
