@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Coach Daniel – SPPB Test</title>
+<title>Coach Daniel – SPPB Calibration</title>
 
 <style>
 html,body{
@@ -26,23 +26,28 @@ video,canvas{
   object-fit:contain;
 }
 canvas{ pointer-events:none; }
+
 #hud{
   position:absolute;
-  bottom:20px;
+  bottom:16px;
   left:0; right:0;
   display:flex;
   justify-content:center;
-  gap:12px;
+  gap:10px;
+  z-index:10;
 }
+
 button{
-  padding:12px 16px;
+  padding:12px 14px;
   font-size:14px;
   border-radius:12px;
   border:none;
-  background:#16a34a;
-  color:#000;
   font-weight:800;
 }
+
+#btnStart{ background:#22c55e; color:#000; }
+#btnA{ background:#3b82f6; }
+#btnB{ background:#f59e0b; }
 </style>
 </head>
 
@@ -53,7 +58,9 @@ button{
   <canvas id="canvas"></canvas>
 
   <div id="hud">
-    <button id="startCam">Start Camera</button>
+    <button id="btnStart">Start Camera</button>
+    <button id="btnA">Calibrate A</button>
+    <button id="btnB">Calibrate B</button>
   </div>
 </div>
 
@@ -65,9 +72,25 @@ button{
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-let detector = null;
-let running = false;
 
+let detector;
+let running = false;
+let lastPose = null;
+
+// Calibration values
+let yA = null;
+let yB = null;
+
+// --- Utilities ---
+function midHipY(pose){
+  const lh = pose.keypoints.find(k=>k.name==="left_hip");
+  const rh = pose.keypoints.find(k=>k.name==="right_hip");
+  if(!lh || !rh) return null;
+  if(lh.score<0.3 || rh.score<0.3) return null;
+  return (lh.y + rh.y) / 2;
+}
+
+// --- Camera ---
 async function startCamera(){
   const stream = await navigator.mediaDevices.getUserMedia({
     video:{ facingMode:"environment", width:{ideal:720}, height:{ideal:1280} },
@@ -89,6 +112,7 @@ async function startCamera(){
   loop();
 }
 
+// --- Main Loop ---
 async function loop(){
   if(!running) return;
 
@@ -96,6 +120,7 @@ async function loop(){
 
   const poses = await detector.estimatePoses(video);
   const pose = poses[0];
+  lastPose = pose;
 
   if(pose){
     for(const k of pose.keypoints){
@@ -107,10 +132,50 @@ async function loop(){
       }
     }
   }
+
+  // Draw calibration lines
+  ctx.lineWidth = 3;
+  ctx.font = "18px system-ui";
+
+  if(yA !== null){
+    ctx.strokeStyle = "#3b82f6";
+    ctx.beginPath();
+    ctx.moveTo(0,yA);
+    ctx.lineTo(canvas.width,yA);
+    ctx.stroke();
+    ctx.fillStyle="#3b82f6";
+    ctx.fillText("A – Standing",10,yA-8);
+  }
+
+  if(yB !== null){
+    ctx.strokeStyle = "#f59e0b";
+    ctx.beginPath();
+    ctx.moveTo(0,yB);
+    ctx.lineTo(canvas.width,yB);
+    ctx.stroke();
+    ctx.fillStyle="#f59e0b";
+    ctx.fillText("B – Sitting",10,yB-8);
+  }
+
   requestAnimationFrame(loop);
 }
 
-document.getElementById("startCam").onclick = startCamera;
+// --- Buttons ---
+document.getElementById("btnStart").onclick = startCamera;
+
+document.getElementById("btnA").onclick = ()=>{
+  if(!lastPose) return alert("No person detected yet");
+  const y = midHipY(lastPose);
+  if(y==null) return alert("Cannot detect hips clearly");
+  yA = y;
+};
+
+document.getElementById("btnB").onclick = ()=>{
+  if(!lastPose) return alert("No person detected yet");
+  const y = midHipY(lastPose);
+  if(y==null) return alert("Cannot detect hips clearly");
+  yB = y;
+};
 </script>
 
 </body>
