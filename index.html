@@ -6,32 +6,23 @@
 <title>Coach Daniel – SPPB</title>
 
 <style>
-:root { --fitMode: cover; } /* cover = full-screen like your 2nd photo */
+:root { --fitMode: cover; }
 
 html,body{
   margin:0; padding:0;
   background:#000; color:#fff;
   font-family:system-ui,-apple-system;
   height:100%;
-  overflow:hidden; /* no scrolling */
+  overflow:hidden;
 }
 
-#stage{
-  position:fixed;
-  inset:0;
-  background:#000;
-  touch-action:none;
-}
-
+#stage{ position:fixed; inset:0; background:#000; }
 video,canvas{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit: var(--fitMode); /* <<< KEY: cover removes black bars */
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit: var(--fitMode);
   object-position:center center;
 }
-
 canvas{ pointer-events:none; }
 
 /* HUD */
@@ -44,10 +35,9 @@ canvas{ pointer-events:none; }
   border-radius:12px;
   font-size:14px;
   z-index:10;
-  min-width: 165px;
+  min-width: 175px;
 }
 
-/* Top-right controls */
 #topRight{
   position:absolute;
   top: max(12px, env(safe-area-inset-top));
@@ -57,7 +47,6 @@ canvas{ pointer-events:none; }
   z-index:10;
 }
 
-/* Bottom controls */
 #calBox{
   position:absolute;
   bottom: max(12px, env(safe-area-inset-bottom));
@@ -75,22 +64,74 @@ canvas{ pointer-events:none; }
   z-index:10;
 }
 
-button,select{
+button,select,input{
   padding:12px 14px;
   border-radius:14px;
   border:none;
   font-size:14px;
   font-weight:800;
 }
-
 .green{ background:#22c55e; color:#000 }
 .blue{ background:#3b82f6; color:#fff }
 .orange{ background:#f59e0b; color:#000 }
 .red{ background:#991b1b; color:#fff }
-.dark{ background:rgba(0,0,0,.55); color:#fff; border:1px solid rgba(255,255,255,.15) }
-
+.dark{
+  background:rgba(0,0,0,.55);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.15);
+}
 .smallBtn{ padding:10px 12px; font-size:13px; }
 
+/* Modal */
+#modalOverlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.65);
+  display:none;
+  z-index:30;
+}
+.modal{
+  position:absolute;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:min(92vw, 520px);
+  background:rgba(15,20,30,.95);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:16px;
+  padding:14px;
+}
+.modal h2{ margin:0 0 10px; font-size:16px; }
+.modal p{ margin:8px 0; font-size:13px; color:rgba(255,255,255,.8); line-height:1.35; }
+.field{ margin:10px 0; }
+.field label{ display:block; font-size:12px; opacity:.8; margin-bottom:6px; }
+.field input, .field select{
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(0,0,0,.35);
+  color:#fff;
+  font-weight:700;
+}
+.row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.modalBtns{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; margin-top:12px; }
+.note{
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.25);
+  font-size:12px;
+  opacity:.9;
+}
+.badge{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(0,0,0,.25);
+  font-size:12px;
+  margin:6px 6px 0 0;
+}
+hr{ border:none; border-top:1px solid rgba(255,255,255,.12); margin:12px 0; }
 </style>
 </head>
 
@@ -99,7 +140,6 @@ button,select{
   <video id="video" autoplay playsinline muted></video>
   <canvas id="canvas"></canvas>
 
-  <!-- Status -->
   <div id="statusBox">
     Mode: <span id="modeLabel">Chair</span><br>
     ⏱ <span id="timer">0.0</span>s<br>
@@ -107,28 +147,33 @@ button,select{
     Status: <span id="status">Ready</span>
   </div>
 
-  <!-- Top-right -->
   <div id="topRight">
     <select id="testMode" class="dark smallBtn">
       <option value="chair">Chair</option>
       <option value="balance">Balance</option>
     </select>
 
-    <!-- Fit toggle: Fill (cover) / Fit (contain) -->
+    <button id="btnLegOrDur" class="dark smallBtn">30s</button>
     <button id="btnFit" class="dark smallBtn">Fill</button>
+    <button id="btnProfile" class="dark smallBtn">👤</button>
   </div>
 
-  <!-- Bottom-left calibration -->
   <div id="calBox">
     <button id="calA" class="blue">A</button>
     <button id="calB" class="orange">B</button>
   </div>
 
-  <!-- Bottom-right actions -->
   <div id="actionBox">
     <button id="startCam" class="green">Camera</button>
     <button id="startTest" class="green">Start</button>
     <button id="stopTest" class="red">Stop</button>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modalOverlay">
+  <div class="modal" id="modalBox">
+    <!-- dynamic -->
   </div>
 </div>
 
@@ -137,7 +182,7 @@ button,select{
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
 
 <script>
-const stage = document.getElementById("stage");
+/* ---------- STATE ---------- */
 const v = document.getElementById("video");
 const c = document.getElementById("canvas");
 const ctx = c.getContext("2d");
@@ -147,13 +192,74 @@ const timerEl = document.getElementById("timer");
 const repsEl = document.getElementById("reps");
 const statusEl = document.getElementById("status");
 const testMode = document.getElementById("testMode");
+const btnLegOrDur = document.getElementById("btnLegOrDur");
+
+const modalOverlay = document.getElementById("modalOverlay");
+const modalBox = document.getElementById("modalBox");
 
 let detector, running=false, lastPose=null;
+
+// chair calibration
 let yA=null, yB=null;
-let reps=0, lastState="unknown";
-let testing=false, startTime=0, lastSwitch=0;
+let reps=0, lastState="unknown", lastSwitch=0;
+
+// testing
+let testing=false, startTime=0;
+
+// chair options
+let chairSeconds = 30; // toggle 30/60
+
+// balance options
+let balanceLeg = "L"; // L or R
 let balBaseY=null, balBaseX=null;
 
+// results store
+let result = {
+  profile: { name:"", age:null, gender:"", phone:"" }, // gender: men/women
+  chair: { reps:null, seconds:null, note:"" },
+  balance: { L:null, R:null, note:"" },
+  updatedAt: null
+};
+
+// localStorage keys
+const KEY_PROFILE = "sppb_profile_v1";
+const KEY_RESULTS = "sppb_last_results_v1";
+
+/* ---------- NORMS ---------- */
+function chair30sNorm(age, gender){
+  // returns target reps from your list; null if out of range
+  // Age buckets: 60-64,65-69,70-74,75-79,80-84,85-89,90-94
+  const buckets = [
+    {min:60,max:64, men:14, women:12},
+    {min:65,max:69, men:12, women:11},
+    {min:70,max:74, men:12, women:10},
+    {min:75,max:79, men:11, women:10},
+    {min:80,max:84, men:10, women:9},
+    {min:85,max:89, men:8, women:8},
+    {min:90,max:94, men:7, women:4},
+  ];
+  const b = buckets.find(x => age>=x.min && age<=x.max);
+  if(!b) return null;
+  return b[gender] ?? null;
+}
+
+function chair60sGuide(age){
+  // your general ranges
+  if(age>=60 && age<=69) return "Around 11–17+ reps";
+  if(age>=70 && age<=79) return "Around 10–15+ reps";
+  if(age>=80) return "Around 8–14+ reps";
+  return "General range varies";
+}
+
+function balanceInterpret(seconds){
+  if(seconds == null) return {level:"Not recorded", text:""};
+  if(seconds < 5) return {level:"High risk", text:"Under 5 seconds is a strong predictor of increased fall risk."};
+  if(seconds < 10) return {level:"Increased risk", text:"Under 10 seconds is linked to higher risk and poorer outcomes in older adults."};
+  if(seconds >= 30) return {level:"Lower risk", text:"Over 30 seconds generally indicates lower fall risk."};
+  return {level:"Moderate", text:"Between 10–30 seconds is moderate; improving balance may reduce fall risk."};
+}
+
+/* ---------- POSE HELPERS ---------- */
 const kp=(p,n)=>p.keypoints.find(k=>k.name===n);
 const midY=p=>{
   const lh=kp(p,"left_hip"), rh=kp(p,"right_hip");
@@ -166,6 +272,7 @@ const midX=p=>{
   return (lh.x+rh.x)/2;
 };
 
+/* ---------- CAMERA ---------- */
 async function startCamera(){
   const stream = await navigator.mediaDevices.getUserMedia({
     video:{ facingMode:"environment", width:{ideal:1280}, height:{ideal:720} },
@@ -190,13 +297,11 @@ async function startCamera(){
 async function loop(){
   if(!running) return;
 
-  // Draw full frame to canvas (canvas uses native video resolution)
   ctx.drawImage(v,0,0,c.width,c.height);
 
   const p = (await detector.estimatePoses(v))[0];
   lastPose = p;
 
-  // Green dots
   if(p){
     for(const k of p.keypoints){
       if(k.score>0.3){
@@ -208,10 +313,8 @@ async function loop(){
     }
   }
 
-  // Optional: show A/B lines (helpful during calibration)
+  // show A/B lines
   ctx.lineWidth=3;
-  ctx.font="16px system-ui";
-
   if(yA!=null){
     ctx.strokeStyle="#3b82f6";
     ctx.beginPath(); ctx.moveTo(0,yA); ctx.lineTo(c.width,yA); ctx.stroke();
@@ -221,7 +324,6 @@ async function loop(){
     ctx.beginPath(); ctx.moveTo(0,yB); ctx.lineTo(c.width,yB); ctx.stroke();
   }
 
-  // Run logic
   if(testing && p){
     if(testMode.value==="chair") chairLogic(p);
     else balanceLogic(p);
@@ -230,10 +332,10 @@ async function loop(){
   requestAnimationFrame(loop);
 }
 
+/* ---------- CHAIR LOGIC ---------- */
 function chairLogic(p){
   const y=midY(p); if(y==null) return;
 
-  // tolerance based on distance between A and B
   const tol = Math.abs(yB-yA) * 0.25;
   let state = lastState;
 
@@ -241,8 +343,9 @@ function chairLogic(p){
   else if(Math.abs(y-yB)<tol) state="sit";
 
   const now=performance.now();
+  const elapsed = (now-startTime)/1000;
 
-  // Count only SIT -> STAND transitions
+  // count SIT -> STAND
   if(lastState==="sit" && state==="stand" && (now-lastSwitch)>500){
     reps++;
     lastSwitch=now;
@@ -250,33 +353,213 @@ function chairLogic(p){
   }
 
   lastState=state;
-  timerEl.textContent=((now-startTime)/1000).toFixed(1);
+  timerEl.textContent=elapsed.toFixed(1);
+
+  // auto-finish at 30/60s
+  if(elapsed >= chairSeconds){
+    stopTest(true);
+  }
 }
 
+/* ---------- BALANCE LOGIC ---------- */
 function balanceLogic(p){
   const y=midY(p), x=midX(p);
-  if(y==null || x==null) { stopTest(); return; }
+  if(y==null || x==null){ stopTest(true); return; }
 
   if(balBaseY===null){
     balBaseY=y; balBaseX=x;
     startTime=performance.now();
   }
 
+  const now=performance.now();
+  const elapsed = (now-startTime)/1000;
+  timerEl.textContent=elapsed.toFixed(1);
+
   const dy=Math.abs(y-balBaseY);
   const dx=Math.abs(x-balBaseX);
 
-  timerEl.textContent=((performance.now()-startTime)/1000).toFixed(1);
-
-  // If drift too large, end test (lost balance)
-  if(dy>c.height*0.05 || dx>c.width*0.08) stopTest();
+  // drift thresholds = "lost balance"
+  if(dy>c.height*0.05 || dx>c.width*0.08){
+    stopTest(true);
+  }
 }
 
-function stopTest(){
+/* ---------- RESULTS + MODALS ---------- */
+function showModal(html){
+  modalBox.innerHTML = html;
+  modalOverlay.style.display = "block";
+}
+function closeModal(){
+  modalOverlay.style.display = "none";
+  modalBox.innerHTML = "";
+}
+
+function saveProfileToStore(){
+  localStorage.setItem(KEY_PROFILE, JSON.stringify(result.profile));
+}
+function loadProfileFromStore(){
+  try{
+    const p = JSON.parse(localStorage.getItem(KEY_PROFILE) || "null");
+    if(p && typeof p==="object") result.profile = {...result.profile, ...p};
+  }catch{}
+}
+
+function saveResultsToStore(){
+  localStorage.setItem(KEY_RESULTS, JSON.stringify(result));
+}
+function loadResultsFromStore(){
+  try{
+    const r = JSON.parse(localStorage.getItem(KEY_RESULTS) || "null");
+    if(r && typeof r==="object") result = r;
+  }catch{}
+}
+
+function openProfileModal(){
+  const p = result.profile || {};
+  showModal(`
+    <h2>Profile (saved on device)</h2>
+    <div class="field">
+      <label>Name</label>
+      <input id="pName" value="${escapeHtml(p.name||"")}" placeholder="Full name">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Age</label>
+        <input id="pAge" type="number" min="50" max="110" value="${p.age ?? ""}" placeholder="e.g. 72">
+      </div>
+      <div class="field">
+        <label>Gender</label>
+        <select id="pGender">
+          <option value="">Select</option>
+          <option value="men" ${p.gender==="men"?"selected":""}>Male</option>
+          <option value="women" ${p.gender==="women"?"selected":""}>Female</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>HP No.</label>
+      <input id="pPhone" value="${escapeHtml(p.phone||"")}" placeholder="e.g. 98163603">
+    </div>
+
+    <div class="note">
+      Safety: Stop immediately if dizzy, chest pain, severe breathlessness, sharp pain, or you feel unsafe.
+      This app is for screening & education only (not a medical diagnosis).
+    </div>
+
+    <div class="modalBtns">
+      <button class="dark" onclick="closeModal()">Cancel</button>
+      <button class="green" onclick="saveProfile()">Save</button>
+    </div>
+  `);
+}
+
+function openResultsModal(){
+  const p = result.profile || {};
+  const chair = result.chair || {};
+  const bal = result.balance || {};
+  const age = Number(p.age);
+
+  // chair interpretation
+  let chairText = "Not recorded yet.";
+  if(chair.reps != null){
+    if(chair.seconds === 30){
+      const target = (p.gender && !isNaN(age)) ? chair30sNorm(age, p.gender) : null;
+      if(target == null){
+        chairText = `You did <b>${chair.reps}</b> reps in <b>30s</b>. (No age/sex norm available for this age.)`;
+      } else {
+        const diff = chair.reps - target;
+        const level = diff >= 0 ? "Meets / above reference" : "Below reference";
+        chairText = `You did <b>${chair.reps}</b> reps in <b>30s</b>. Reference for your age/sex is <b>${target}</b>. <b>${level}</b>.`;
+      }
+    } else if(chair.seconds === 60){
+      chairText = `You did <b>${chair.reps}</b> reps in <b>1 minute</b>. Guide: <b>${chair60sGuide(age)}</b>.`;
+    } else {
+      chairText = `Chair: <b>${chair.reps}</b> reps.`;
+    }
+  }
+
+  // balance interpretation
+  const L = bal.L, R = bal.R;
+  const iL = balanceInterpret(L);
+  const iR = balanceInterpret(R);
+
+  const dateStr = new Date(result.updatedAt || Date.now()).toLocaleString();
+
+  showModal(`
+    <h2>Results Summary</h2>
+
+    <div class="badge">Name: <b>${escapeHtml(p.name||"—")}</b></div>
+    <div class="badge">Age: <b>${escapeHtml(p.age ?? "—")}</b></div>
+    <div class="badge">Gender: <b>${p.gender==="men"?"Male":(p.gender==="women"?"Female":"—")}</b></div>
+    <div class="badge">Time: <b>${escapeHtml(dateStr)}</b></div>
+
+    <hr>
+
+    <h2 style="font-size:15px;margin:0 0 8px;">Chair Stand</h2>
+    <p>${chairText}</p>
+    <p class="note">
+      Reminder: Arms crossed on chest. Stable chair (no wheels). Stop if unwell.
+    </p>
+
+    <hr>
+
+    <h2 style="font-size:15px;margin:0 0 8px;">Single-Leg Balance</h2>
+    <p><b>Left:</b> ${L==null?"—":L.toFixed(1)+"s"} • <b>${iL.level}</b><br>${iL.text}</p>
+    <p><b>Right:</b> ${R==null?"—":R.toFixed(1)+"s"} • <b>${iR.level}</b><br>${iR.text}</p>
+
+    <p class="note">
+      Encourage action: simple balance + strength training can reduce fall risk and improve independence.
+      If frequent falls or concerning symptoms, consult a healthcare professional.
+    </p>
+
+    <div class="modalBtns">
+      <button class="dark" onclick="closeModal()">Back to Camera</button>
+      <button class="dark" onclick="openProfileModal()">Edit Profile</button>
+      <button class="green" onclick="copyContact()">Copy Coach Contact</button>
+    </div>
+  `);
+}
+
+function copyContact(){
+  const text = "Coach Daniel Phua (HP: 98163603)";
+  navigator.clipboard?.writeText(text).then(()=>{
+    alert("Copied: " + text);
+  }).catch(()=>{
+    alert(text);
+  });
+}
+
+/* ---------- STOP TEST ---------- */
+function stopTest(auto=false){
+  if(!testing && !auto){
+    statusEl.textContent="Completed";
+    openResultsModal();
+    return;
+  }
+
   testing=false;
   statusEl.textContent="Completed";
+
+  // save results
+  result.updatedAt = Date.now();
+
+  if(testMode.value==="chair"){
+    result.chair.reps = reps;
+    result.chair.seconds = chairSeconds;
+  } else {
+    // balance time stored for selected leg
+    const t = parseFloat(timerEl.textContent || "0");
+    if(balanceLeg==="L") result.balance.L = t;
+    else result.balance.R = t;
+  }
+
+  saveResultsToStore();
+
+  // auto show results
+  openResultsModal();
 }
 
-// Buttons
+/* ---------- UI WIRING ---------- */
 document.getElementById("startCam").onclick=startCamera;
 
 document.getElementById("calA").onclick=()=>{
@@ -294,39 +577,106 @@ document.getElementById("calB").onclick=()=>{
 };
 
 document.getElementById("startTest").onclick=()=>{
-  if(testMode.value==="chair" && (yA==null || yB==null)){
-    return alert("Chair mode needs Calibrate A (stand) and B (sit).");
+  if(testMode.value==="chair"){
+    if(yA==null || yB==null) return alert("Chair needs Calibrate A (stand) and B (sit).");
+    reps=0; repsEl.textContent="0";
+    lastState="unknown"; lastSwitch=0;
+  } else {
+    balBaseY=null; balBaseX=null;
+    // reset display reps to 0 (not used)
+    repsEl.textContent="—";
   }
-  reps=0; repsEl.textContent="0";
-  lastState="unknown";
-  lastSwitch=0;
-  balBaseY=null; balBaseX=null;
+
+  timerEl.textContent="0.0";
   startTime=performance.now();
   testing=true;
   statusEl.textContent="Running";
 };
 
-document.getElementById("stopTest").onclick=stopTest;
+document.getElementById("stopTest").onclick=()=>stopTest(false);
 
-// Mode
 testMode.onchange=()=>{
-  modeLabel.textContent = testMode.value==="chair" ? "Chair" : "Balance";
+  const m = testMode.value;
+  modeLabel.textContent = m==="chair" ? "Chair" : "Balance";
   statusEl.textContent="Ready";
   timerEl.textContent="0.0";
+  repsEl.textContent = (m==="chair") ? "0" : "—";
+
+  // button behavior: Chair -> 30/60 toggle, Balance -> L/R toggle
+  if(m==="chair"){
+    btnLegOrDur.textContent = chairSeconds===30 ? "30s" : "60s";
+  } else {
+    btnLegOrDur.textContent = balanceLeg; // L or R
+  }
+};
+
+btnLegOrDur.onclick=()=>{
+  if(testMode.value==="chair"){
+    chairSeconds = (chairSeconds===30) ? 60 : 30;
+    btnLegOrDur.textContent = chairSeconds===30 ? "30s" : "60s";
+  } else {
+    balanceLeg = (balanceLeg==="L") ? "R" : "L";
+    btnLegOrDur.textContent = balanceLeg;
+  }
 };
 
 // Fit toggle
 const btnFit = document.getElementById("btnFit");
-let fill = true; // start with Fill (cover)
+let fill = true;
 btnFit.onclick = ()=>{
   fill = !fill;
   document.documentElement.style.setProperty("--fitMode", fill ? "cover" : "contain");
   btnFit.textContent = fill ? "Fill" : "Fit";
 };
-
-// Start default
 document.documentElement.style.setProperty("--fitMode","cover");
 btnFit.textContent="Fill";
+
+// Profile button
+document.getElementById("btnProfile").onclick=openProfileModal;
+
+// Modal close by tapping outside
+modalOverlay.addEventListener("click", (e)=>{
+  if(e.target === modalOverlay) closeModal();
+});
+
+// Expose functions to modal buttons
+window.closeModal = closeModal;
+window.openProfileModal = openProfileModal;
+window.copyContact = copyContact;
+window.saveProfile = ()=>{
+  const name = document.getElementById("pName").value.trim();
+  const age = Number(document.getElementById("pAge").value);
+  const gender = document.getElementById("pGender").value;
+  const phone = document.getElementById("pPhone").value.trim();
+
+  result.profile = {
+    name,
+    age: Number.isFinite(age) ? age : null,
+    gender,
+    phone
+  };
+  saveProfileToStore();
+  closeModal();
+};
+
+// Escape helper
+function escapeHtml(s){
+  return String(s ?? "").replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+  }[m]));
+}
+
+/* ---------- INIT ---------- */
+loadProfileFromStore();
+loadResultsFromStore();
+
+// set initial button label
+btnLegOrDur.textContent = "30s";
+
+// first run: encourage setting profile
+if(!result.profile?.age || !result.profile?.gender){
+  setTimeout(()=>openProfileModal(), 300);
+}
 </script>
 </body>
 </html>
